@@ -1,0 +1,126 @@
+@import "tailwindcss";
+
+/* Couleurs de la charte graphique Donuts & Donuts (CMJN converties) */
+@theme {
+  --color-magenta: #e6007e; /* 0/100/0/0 */
+  --color-magenta-fonce: #b8006a; /* variante plus sombre pour le petit texte (contraste) */
+  --color-violet: #951b81; /* 50/100/0/0 */
+  --color-rose: #f08494; /* 0/61/23/0 */
+  --color-bleu: #36a9e1; /* 70/15/0/0 */
+  --color-orange: #f9b25f; /* 0/37/68/0 */
+  --color-encre: #3a0f35; /* texte principal, violet très foncé */
+  --color-poudre: #fde8f0; /* fond rose très clair */
+  --color-creme: #fff7fa;
+
+  --font-titre: var(--font-fredoka), "Trebuchet MS", system-ui, sans-serif;
+  --font-texte: var(--font-nunito), system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+
+html {
+  scroll-behavior: smooth;
+  -webkit-text-size-adjust: 100%;
+}
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+}
+
+body {
+  background: var(--color-creme);
+  color: var(--color-encre);
+  font-family: var(--font-texte);
+  font-size: 1.0625rem;
+  line-height: 1.6;
+}
+
+h1, h2, h3 {
+  font-family: var(--font-titre);
+  line-height: 1.15;
+}
+
+/* Focus clavier bien visible partout */
+:focus-visible {
+  outline: 3px solid var(--color-bleu);
+  outline-offset: 3px;
+  border-radius: 6px;
+}
+
+/* Fond marbre rose léger (rappel de la charte), en pur CSS */
+.fond-marbre {
+  background-color: var(--color-poudre);
+  background-image:
+    radial-gradient(120% 60% at 10% 0%, rgba(240, 132, 148, 0.25), transparent 60%),
+    radial-gradient(80% 50% at 100% 30%, rgba(230, 0, 126, 0.08), transparent 60%),
+    radial-gradient(90% 60% at 0% 100%, rgba(149, 27, 129, 0.08), transparent 60%);
+}
+
+/* Champs de formulaire */
+.champ {
+  width: 100%;
+  min-height: 48px;
+  border: 2px solid #c9a5bf;
+  border-radius: 12px;
+  background: #fff;
+  padding: 0.6rem 0.85rem;
+  font-size: 1rem; /* ≥ 16px : évite le zoom automatique sur iPhone */
+  color: var(--color-encre);
+}
+.champ:focus {
+  border-color: var(--color-violet);
+  outline: 3px solid rgba(54, 169, 225, 0.6);
+  outline-offset: 1px;
+}
+.champ[aria-invalid="true"] {
+  border-color: #c0001a;
+}
+.label {
+  display: block;
+  font-weight: 700;
+  margin-bottom: 0.35rem;
+}
+.aide {
+  font-size: 0.9375rem;
+  color: #5d3a58;
+}
+.erreur {
+  color: #b00017;
+  font-weight: 700;
+  font-size: 0.9375rem;
+  margin-top: 0.3rem;
+}
+
+/* Puces cliquables (radios / cases) */
+.puce {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-height: 44px;
+  padding: 0.45rem 0.9rem;
+  border: 2px solid #d9b8cf;
+  border-radius: 999px;
+  background: #fff;
+  cursor: pointer;
+  user-select: none;
+}
+.puce:has(input:checked) {
+  border-color: var(--color-magenta);
+  background: #ffe3f1;
+  font-weight: 700;
+}
+.puce:has(input:focus-visible) {
+  outline: 3px solid var(--color-bleu);
+  outline-offset: 2px;
+}
+.puce input {
+  width: 1.15rem;
+  height: 1.15rem;
+  accent-color: var(--color-magenta);
+}
+
+.sr-only-focusable:not(:focus) {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
