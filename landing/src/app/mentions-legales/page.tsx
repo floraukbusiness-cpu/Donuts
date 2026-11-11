@@ -10,10 +10,10 @@ export const metadata: Metadata = {
 };
 
 // Source : registre officiel des entreprises (SIRET 991 118 936 00020).
-// À vérifier par la société : directeur de la publication, capital social et n° de TVA (calculé à partir du SIREN).
+// À vérifier par la société : directeur de la publication et n° de TVA (calculé à partir du SIREN).
 const EDITEUR = {
   raisonSociale: "JUST D'OH IT",
-  forme: "SAS, société par actions simplifiée, au capital de [montant du capital] €",
+  forme: "SAS, société par actions simplifiée, au capital de 100 000 €",
   siege: "Centre commercial Mériadeck, 57 rue du Château d'Eau, 33000 Bordeaux",
   siren: "SIREN 991 118 936 – RCS Bordeaux",
   etablissement: "Établissement de Lyon : SIRET 991 118 936 00020, 17 rue du Docteur Bouchut, 69003 Lyon",
