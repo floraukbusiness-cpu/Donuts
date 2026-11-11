@@ -57,6 +57,7 @@ Supabase → **Table Editor** :
 | Je veux changer… | Fichier |
 |---|---|
 | Prix, minimum de commande, offre « 12 = 1 offert », présentations, options, **parfums**, adresse, horaires, Instagram | [`src/lib/catalogue.ts`](src/lib/catalogue.ts) |
+| Anniversaire sur place : jours ouverts (mercredi, samedi), délai (5 jours), créneaux (1 h, pause de 30 min, 11h-18h), limites d'invités | [`src/lib/catalogue.ts`](src/lib/catalogue.ts) : `JOURS_SUR_PLACE`, `DELAI_SUR_PLACE_JOURS`, `SUR_PLACE_DEBUT/FIN`, `CRENEAU_DUREE/PAUSE`, `MAX_ENFANTS/ADULTES_SUR_PLACE` |
 | Textes de la page, étapes, FAQ, galerie | [`src/app/page.tsx`](src/app/page.tsx) |
 | Photos du diaporama de chaque carte (Anniversaire, Personnalisée, Pro) | [`src/components/Demandes.tsx`](src/components/Demandes.tsx) : liste `photos` de la carte (une ligne par photo) |
 | Mentions légales (bloc `EDITEUR` **à compléter**) | [`src/app/mentions-legales/page.tsx`](src/app/mentions-legales/page.tsx) |

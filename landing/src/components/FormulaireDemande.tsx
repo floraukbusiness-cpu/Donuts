@@ -1,9 +1,8 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
-import { DECO, MAX_ADULTES_SUR_PLACE, MAX_ENFANTS_SUR_PLACE, MINIMUM_DONUTS, PRESENTATIONS, PRIX, SOURCES } from "@/lib/catalogue";
-import { dateMaximum, dateMinimum } from "@/lib/dates";
+import { CRENEAUX_SUR_PLACE, DECO, JOURS_SUR_PLACE, MAX_ADULTES_SUR_PLACE, MAX_ENFANTS_SUR_PLACE, MINIMUM_DONUTS, PRESENTATIONS, PRIX, SOURCES } from "@/lib/catalogue";
+import { dateMaximum, dateMinimum, dateMinimumSurPlace } from "@/lib/dates";
 import {
-  CRENEAUX,
   EVENEMENTS,
   formDataToObject,
   LIBELLES_TYPE,
@@ -14,6 +13,7 @@ import {
   type ErreursChamps,
   type TypeDemande,
 } from "@/lib/schema";
+import { Calendrier } from "./Calendrier";
 import { ChoixParfums } from "./ChoixParfums";
 import { Champ, Choix, Erreur, Liste, Zone } from "./champs";
 import { PhotosInspiration } from "./PhotosInspiration";
@@ -30,6 +30,8 @@ export function FormulaireDemande({ type, utm }: Props) {
   const [debut, setDebut] = useState(0);
   const [minDate, setMinDate] = useState("");
   const [maxDate, setMaxDate] = useState("");
+  const [minSurPlace, setMinSurPlace] = useState("");
+  const [dateSurPlace, setDateSurPlace] = useState("");
 
   // Champs qui font apparaître d'autres champs
   const [mode, setMode] = useState("");
@@ -42,6 +44,7 @@ export function FormulaireDemande({ type, utm }: Props) {
     setDebut(Date.now());
     setMinDate(dateMinimum());
     setMaxDate(dateMaximum());
+    setMinSurPlace(dateMinimumSurPlace());
   }, []);
 
   useEffect(() => {
@@ -56,7 +59,7 @@ export function FormulaireDemande({ type, utm }: Props) {
     if (!form) return;
     const champs = Object.keys(errs);
     // Ordre d'apparition dans le formulaire
-    const el = Array.from(form.querySelectorAll<HTMLElement>("input, select, textarea")).find((e) =>
+    const el = Array.from(form.querySelectorAll<HTMLElement>("input:not([type=hidden]), select, textarea, [data-champ]")).find((e) =>
       champs.includes(e.getAttribute("name") ?? e.getAttribute("data-champ") ?? ""),
     );
     el?.focus();
@@ -185,7 +188,7 @@ export function FormulaireDemande({ type, utm }: Props) {
             onValeur={(v) => setMode(v)}
             erreur={err("mode")}
           />
-          {mode !== "" && (
+          {mode === "a_emporter" && (
             <Champ
               name="date"
               label="Date de l'anniversaire"
@@ -197,9 +200,31 @@ export function FormulaireDemande({ type, utm }: Props) {
               erreur={err("date")}
             />
           )}
-          {mode === "sur_place" && (
+          {mode === "sur_place" && minSurPlace && (
             <>
-              <Liste name="creneau" label="Créneau horaire souhaité" requis options={CRENEAUX} erreur={err("creneau")} />
+              <Calendrier
+                name="date"
+                label="Date de l'anniversaire"
+                aide="Anniversaires sur place : le mercredi et le samedi, à réserver au moins 5 jours à l'avance. Les jours disponibles sont en rose."
+                min={minSurPlace}
+                max={maxDate}
+                joursOuverts={JOURS_SUR_PLACE}
+                valeur={dateSurPlace}
+                onChange={setDateSurPlace}
+                erreur={err("date")}
+              />
+              {dateSurPlace ? (
+                <Choix
+                  name="creneau"
+                  label="Créneau horaire souhaité"
+                  requis
+                  aide="Créneaux d'1 h, de 11h à 18h."
+                  options={CRENEAUX_SUR_PLACE.map((c) => ({ value: c, label: c }))}
+                  erreur={err("creneau")}
+                />
+              ) : (
+                <p className="aide">Choisissez d'abord une date pour voir les créneaux.</p>
+              )}
               <p className="rounded-xl bg-poudre p-3 font-bold text-violet">
                 Sur place : {MAX_ENFANTS_SUR_PLACE} enfants et {MAX_ADULTES_SUR_PLACE} adulte maximum par créneau.
               </p>

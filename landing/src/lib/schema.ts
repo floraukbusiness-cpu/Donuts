@@ -1,13 +1,13 @@
 // Règles de validation des 3 formulaires, partagées entre le navigateur
 // (messages d'erreur immédiats) et le serveur (contrôle final, non contournable).
 import { z } from "zod";
-import { MAX_ADULTES_SUR_PLACE, MAX_ENFANTS_SUR_PLACE, MINIMUM_DONUTS, PARFUMS_A_DEFINIR, PRESENTATIONS, SOURCES, TOUS_LES_PARFUMS } from "./catalogue";
-import { dateMaximum, dateMinimum, estDimanche } from "./dates";
+import { CRENEAUX_SUR_PLACE, JOURS_SUR_PLACE, MAX_ADULTES_SUR_PLACE, MAX_ENFANTS_SUR_PLACE, MINIMUM_DONUTS, PARFUMS_A_DEFINIR, PRESENTATIONS, SOURCES, TOUS_LES_PARFUMS } from "./catalogue";
+import { dateMaximum, dateMinimum, dateMinimumSurPlace, estDimanche, jourSemaine } from "./dates";
 
 export const TYPES = ["anniversaire", "personnalisee", "pro"] as const;
 export type TypeDemande = (typeof TYPES)[number];
 
-export const CRENEAUX = ["10h – 12h", "12h – 14h", "14h – 16h", "16h – 18h", "18h – 20h"] as const;
+export const CRENEAUX = CRENEAUX_SUR_PLACE;
 export const EVENEMENTS = ["Soirée", "Événement", "Baptême", "Mariage", "EVJF", "Autre"] as const;
 export const SECTEURS = ["Traiteur", "Wedding planner", "Concept store", "Entreprise", "Autre"] as const;
 export const USAGES = ["Revente", "Pour mes salariés ou clients", "Pour un événement"] as const;
@@ -93,6 +93,7 @@ export const anniversaireSchema = z
   .object({
     type: z.literal("anniversaire"),
     ...commun(),
+    date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Choisissez une date."), // règles ci-dessous, selon le mode
     mode: z.enum(["sur_place", "a_emporter"], { errorMap: () => ({ message: "Choisissez « sur place » ou « à emporter »." }) }),
     creneau: z.string().optional().default(""),
     enfants: entier("Indiquez un nombre entier."),
@@ -111,12 +112,18 @@ export const anniversaireSchema = z
   .superRefine((v, ctx) => {
     verifierCommande(v, ctx);
     if (v.mode === "sur_place") {
+      if (v.date < dateMinimumSurPlace()) ctx.addIssue({ code: "custom", path: ["date"], message: "Pour un anniversaire sur place, réservez au moins 5 jours à l'avance." });
+      else if (v.date > dateMaximum()) ctx.addIssue({ code: "custom", path: ["date"], message: "Choisissez une date dans les 12 prochains mois." });
+      else if (!JOURS_SUR_PLACE.includes(jourSemaine(v.date))) ctx.addIssue({ code: "custom", path: ["date"], message: "Sur place, les anniversaires ont lieu le mercredi et le samedi." });
       if (!(CRENEAUX as readonly string[]).includes(v.creneau)) ctx.addIssue({ code: "custom", path: ["creneau"], message: "Choisissez un créneau horaire." });
       if (v.enfants + v.adultes < 1) ctx.addIssue({ code: "custom", path: ["enfants"], message: "Indiquez le nombre d'invités (enfants et/ou adultes)." });
       if (v.enfants > MAX_ENFANTS_SUR_PLACE) ctx.addIssue({ code: "custom", path: ["enfants"], message: `Sur place, ${MAX_ENFANTS_SUR_PLACE} enfants maximum par créneau.` });
       if (v.adultes > MAX_ADULTES_SUR_PLACE) ctx.addIssue({ code: "custom", path: ["adultes"], message: `Sur place, ${MAX_ADULTES_SUR_PLACE} adulte maximum par créneau.` });
     }
     if (v.mode === "a_emporter") {
+      if (v.date < dateMinimum()) ctx.addIssue({ code: "custom", path: ["date"], message: "Nous avons besoin d'au moins 7 jours pour préparer votre commande : choisissez une date à partir de J+7." });
+      else if (v.date > dateMaximum()) ctx.addIssue({ code: "custom", path: ["date"], message: "Choisissez une date dans les 12 prochains mois." });
+      else if (estDimanche(v.date)) ctx.addIssue({ code: "custom", path: ["date"], message: "La boutique est fermée le dimanche : choisissez un autre jour." });
       const r = heureBoutique.safeParse(v.heure_retrait);
       if (!r.success) ctx.addIssue({ code: "custom", path: ["heure_retrait"], message: v.heure_retrait ? r.error.issues[0].message : "Indiquez l'heure de retrait." });
     }

@@ -1,3 +1,5 @@
+import { DELAI_SUR_PLACE_JOURS } from "./catalogue";
+
 export const DELAI_MIN_JOURS = 7;
 
 /** Date du jour à Lyon, au format AAAA-MM-JJ (indépendant du fuseau du serveur). */
@@ -25,6 +27,17 @@ export function dateMinimum(now: Date = new Date()): string {
 /** 12 mois max à l'avance, pour éviter les fautes de frappe (ex. 2062). */
 export function dateMaximum(now: Date = new Date()): string {
   return ajouterJours(aujourdhuiParis(now), 366);
+}
+
+/** Jour de la semaine d'une date AAAA-MM-JJ (0 = dimanche … 6 = samedi). */
+export function jourSemaine(iso: string): number {
+  const [y, m, d] = iso.split("-").map(Number);
+  return new Date(Date.UTC(y, m - 1, d)).getUTCDay();
+}
+
+/** Première date réservable pour un anniversaire sur place : aujourd'hui + 5 jours. */
+export function dateMinimumSurPlace(now: Date = new Date()): string {
+  return ajouterJours(aujourdhuiParis(now), DELAI_SUR_PLACE_JOURS);
 }
 
 /** La boutique est fermée le dimanche. */

@@ -1,7 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { lignesDemande, sujet } from "./email";
-import { aujourdhuiParis, ajouterJours, dateMinimum, estDimanche } from "./dates";
+import { aujourdhuiParis, ajouterJours, dateMinimum, dateMinimumSurPlace, estDimanche, jourSemaine } from "./dates";
 import { valider } from "./schema";
+import { CRENEAUX_SUR_PLACE } from "./catalogue";
 
 describe("dates", () => {
   it("J+7 calculé à l'heure de Lyon", () => {
@@ -15,6 +16,12 @@ describe("dates", () => {
   });
 });
 
+/** Prochain mercredi ou samedi à au moins 6 jours. */
+const dateSurPlace = () => {
+  let d = ajouterJours(aujourdhuiParis(), 6);
+  while (![3, 6].includes(jourSemaine(d))) d = ajouterJours(d, 1);
+  return d;
+};
 const dateOuvrable = () => {
   let d = ajouterJours(aujourdhuiParis(), 8);
   while (estDimanche(d)) d = ajouterJours(d, 1);
@@ -28,6 +35,18 @@ const base = {
   date: dateOuvrable(),
   rgpd: "on",
 };
+
+describe("anniversaire sur place : calendrier et créneaux", () => {
+  it("5 créneaux d'1 h entre 11h et 18h, avec 30 min de pause", () => {
+    expect(CRENEAUX_SUR_PLACE).toEqual(["11h00 – 12h00", "12h30 – 13h30", "14h00 – 15h00", "15h30 – 16h30", "17h00 – 18h00"]);
+  });
+  it("J+5 pour le sur place (J+7 sinon)", () => {
+    const now = new Date("2026-11-09T10:00:00Z");
+    expect(dateMinimumSurPlace(now)).toBe("2026-11-14");
+    expect(dateMinimum(now)).toBe("2026-11-16");
+    expect(jourSemaine("2026-11-14")).toBe(6); // samedi
+  });
+});
 
 describe("validation", () => {
   it("dimanche refusé", () => {
@@ -53,8 +72,20 @@ describe("validation", () => {
     expect(r.ok).toBe(false);
     if (!r.ok) expect(Object.keys(r.erreurs)).toEqual(expect.arrayContaining(["creneau", "enfants"]));
   });
+  it("sur place : mercredi ou samedi, au moins 5 jours à l'avance", () => {
+    const sp = { ...base, type: "anniversaire", mode: "sur_place", creneau: "14h00 – 15h00", enfants: "2", adultes: "1", nb_donuts: "12", presentation: "boite" };
+    expect(valider("anniversaire", { ...sp, date: dateSurPlace() }).ok).toBe(true);
+    let mardi = ajouterJours(aujourdhuiParis(), 8);
+    while (jourSemaine(mardi) !== 2) mardi = ajouterJours(mardi, 1);
+    const r = valider("anniversaire", { ...sp, date: mardi });
+    expect(r.ok).toBe(false);
+    if (!r.ok) expect(r.erreurs.date).toMatch(/mercredi et le samedi/);
+    const trop = valider("anniversaire", { ...sp, date: ajouterJours(aujourdhuiParis(), 2) });
+    expect(trop.ok).toBe(false);
+    expect(valider("anniversaire", { ...sp, date: dateSurPlace(), creneau: "10h00 – 11h00" }).ok).toBe(false);
+  });
   it("sur place : 4 enfants et 1 adulte maximum par créneau", () => {
-    const sp = { ...base, type: "anniversaire", mode: "sur_place", creneau: "14h – 16h", nb_donuts: "12", presentation: "boite" };
+    const sp = { ...base, date: dateSurPlace(), type: "anniversaire", mode: "sur_place", creneau: "14h00 – 15h00", nb_donuts: "12", presentation: "boite" };
     expect(valider("anniversaire", { ...sp, enfants: "4", adultes: "1" }).ok).toBe(true);
     const r = valider("anniversaire", { ...sp, enfants: "5", adultes: "2" });
     expect(r.ok).toBe(false);

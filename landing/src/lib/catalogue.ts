@@ -11,7 +11,24 @@ export const PRIX = {
 
 export const MINIMUM_DONUTS = 6;
 
-// Anniversaire sur place : capacité maximale par créneau
+// Anniversaire sur place : jours ouverts, délai, créneaux et capacité.
+// Jours : 0 = dimanche, 1 = lundi … 3 = mercredi … 6 = samedi.
+export const JOURS_SUR_PLACE = [3, 6]; // mercredi et samedi
+export const DELAI_SUR_PLACE_JOURS = 5; // réservation au moins 5 jours à l'avance
+const SUR_PLACE_DEBUT = 11 * 60; // premier créneau : 11h
+const SUR_PLACE_FIN = 18 * 60; // le dernier créneau se termine à 18h au plus tard
+const CRENEAU_DUREE = 60; // créneaux d'1 h
+const CRENEAU_PAUSE = 30; // 30 min de pause entre deux créneaux
+
+const hhmm = (min: number) => `${Math.floor(min / 60)}h${String(min % 60).padStart(2, "0")}`;
+/** 11h00 – 12h00, 12h30 – 13h30, 14h00 – 15h00, 15h30 – 16h30, 17h00 – 18h00 */
+export const CRENEAUX_SUR_PLACE: readonly string[] = (() => {
+  const out: string[] = [];
+  for (let d = SUR_PLACE_DEBUT; d + CRENEAU_DUREE <= SUR_PLACE_FIN; d += CRENEAU_DUREE + CRENEAU_PAUSE) out.push(`${hhmm(d)} – ${hhmm(d + CRENEAU_DUREE)}`);
+  return out;
+})();
+
+// Capacité maximale par créneau
 export const MAX_ENFANTS_SUR_PLACE = 4;
 export const MAX_ADULTES_SUR_PLACE = 1;
 export const OFFRE_DOUZE = "12 donuts commandés = 1 donut offert";

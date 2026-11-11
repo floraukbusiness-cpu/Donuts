@@ -32,15 +32,36 @@ async function coordonnees(page: Page) {
   await f.locator('[name="email"]').fill("camille@example.com");
 }
 
-async function finir(page: Page, date = dansJours(10)) {
+async function finir(page: Page, date: string | null = dansJours(10)) {
   const f = page.locator("form");
-  await f.locator('[name="date"]').fill(date);
+  if (date) await f.locator('[name="date"]').fill(date);
   await f.locator('[name="message"]').fill("Merci !");
   await f.locator('[name="source"]').selectOption("Instagram");
   await f.locator('[name="rgpd"]').check();
   // Le filtre anti-robots refuse les envois en moins de 3 secondes
   await page.waitForTimeout(3100);
   await f.getByRole("button", { name: "Envoyer ma demande" }).click();
+}
+
+const CRENEAUX_ATTENDUS = ["11h00 – 12h00", "12h30 – 13h30", "14h00 – 15h00", "15h30 – 16h30", "17h00 – 18h00"];
+
+/** Prochaine date (mercredi ou samedi) à au moins n jours, au format AAAA-MM-JJ. */
+function prochainJourOuvert(n: number) {
+  for (let i = n; i < n + 14; i++) {
+    const d = dansJours(i);
+    const j = new Date(d + "T00:00:00Z").getUTCDay();
+    if (j === 3 || j === 6) return d;
+  }
+  throw new Error("introuvable");
+}
+
+/** Clique le premier jour disponible du calendrier « sur place » et renvoie sa date. */
+async function choisirJourSurPlace(page: Page, avecJour?: string): Promise<string> {
+  const f = page.locator("form");
+  const cible = avecJour ? f.locator(`button[data-date="${avecJour}"]`) : f.locator("table button:not([disabled])").first();
+  if ((await cible.count()) === 0) await f.getByRole("button", { name: "Mois suivant" }).click();
+  await cible.first().click();
+  return f.locator('input[name="date"]').evaluate((el) => (el as HTMLInputElement).value);
 }
 
 async function cocherParfum(page: Page, categorie: string, parfum: string) {
@@ -114,25 +135,54 @@ test("calendrier : dates à moins de 7 jours bloquées avec explication", async 
   expect(await appels(page)).toHaveLength(0);
 });
 
-test("anniversaire sur place : date et créneau dès le choix, 4 enfants et 1 adulte maximum", async ({ page }) => {
+test("anniversaire sur place : calendrier mercredi/samedi dès J+5, créneaux d'1 h, 4 enfants et 1 adulte maximum", async ({ page }) => {
   const f = await ouvrir(page, /Anniversaire/);
-  await expect(f.locator('[name="date"]')).toHaveCount(0); // pas avant d'avoir choisi sur place / à emporter
+  await expect(f.locator('input[name="date"]')).toHaveCount(0); // pas avant d'avoir choisi sur place / à emporter
   await page.getByLabel("Sur place, à la boutique").check();
-  // la date est juste sous le choix, avant le créneau
-  const ordre = await f.locator('[name="mode"], [name="date"], [name="creneau"], [name="enfants"]').evaluateAll((els) => els.map((e) => e.getAttribute("name")));
-  expect(ordre.filter((n, i) => ordre.indexOf(n) === i)).toEqual(["mode", "date", "creneau", "enfants"]);
+  await expect(f.getByRole("table")).toBeVisible();
+  await expect(f.getByText("Aucune date choisie pour l'instant.")).toBeVisible();
+  await expect(f.getByLabel("11h00 – 12h00")).toHaveCount(0); // créneaux visibles seulement après avoir choisi une date
+
+  // Seuls les mercredis et samedis, à partir de J+5, sont cliquables (mois affiché + mois suivant)
+  const lire = () => f.locator("table button:not([disabled])").evaluateAll((bs) => bs.map((b) => (b as HTMLElement).dataset.date!));
+  let dispos = await lire();
+  await f.getByRole("button", { name: "Mois suivant" }).click();
+  dispos = [...dispos, ...(await lire())];
+  expect(dispos.length).toBeGreaterThan(0);
+  for (const d of dispos) {
+    expect([3, 6]).toContain(new Date(d + "T00:00:00Z").getUTCDay());
+    expect(d >= dansJours(5)).toBe(true);
+  }
+  expect(dispos[0]).toBe(prochainJourOuvert(5)); // le premier jour proposé est bien le prochain mer./sam. à J+5 ou plus
+  await f.getByRole("button", { name: "Mois précédent" }).click();
+
+  const jour = await choisirJourSurPlace(page);
+  await expect(f.getByText(/Date choisie/)).toContainText(String(Number(jour.slice(8))));
+  const noms = await f.locator('input[name="creneau"]').evaluateAll((els) => els.map((e) => (e as HTMLInputElement).value));
+  expect(noms).toEqual(CRENEAUX_ATTENDUS); // 5 créneaux d'1 h avec 30 min de pause
   await expect(f.getByText("4 enfants et 1 adulte maximum par créneau")).toBeVisible();
   await expect(f.locator('[name="enfants"]')).toHaveAttribute("max", "4");
   await expect(f.locator('[name="adultes"]')).toHaveAttribute("max", "1");
   await coordonnees(page);
-  await f.locator('[name="creneau"]').selectOption("14h – 16h");
+  await f.getByLabel("14h00 – 15h00").check();
   await f.locator('[name="enfants"]').fill("5");
   await f.locator('[name="adultes"]').fill("2");
   await f.locator('[name="nb_donuts"]').fill("12");
   await page.getByLabel(/Boîte\(s\)/).check();
-  await finir(page);
+  await finir(page, null);
   await expect(f.getByText("Sur place, 4 enfants maximum par créneau.")).toBeVisible();
   await expect(f.getByText("Sur place, 1 adulte maximum par créneau.")).toBeVisible();
+  expect(await appels(page)).toHaveLength(0);
+});
+
+test("anniversaire sur place : sans date, le message d'erreur s'affiche sur le calendrier", async ({ page }) => {
+  const f = await ouvrir(page, /Anniversaire/);
+  await page.getByLabel("Sur place, à la boutique").check();
+  await coordonnees(page);
+  await f.locator('[name="nb_donuts"]').fill("12");
+  await page.getByLabel(/Boîte\(s\)/).check();
+  await finir(page, null);
+  await expect(f.getByText("Choisissez une date.")).toBeVisible();
   expect(await appels(page)).toHaveLength(0);
 });
 
@@ -154,7 +204,8 @@ test("ANNIVERSAIRE sur place : envoi de bout en bout + UTM", async ({ page }) =>
   await coordonnees(page);
   const f = page.locator("form");
   await page.getByLabel("Sur place, à la boutique").check();
-  await f.locator('[name="creneau"]').selectOption("14h – 16h");
+  const jour = await choisirJourSurPlace(page);
+  await f.getByLabel("14h00 – 15h00").check();
   await f.locator('[name="enfants"]').fill("4");
   await f.locator('[name="adultes"]').fill("1");
   await f.locator('[name="age"]').fill("7");
@@ -169,7 +220,7 @@ test("ANNIVERSAIRE sur place : envoi de bout en bout + UTM", async ({ page }) =>
   await expect(f.getByText(/sans pouvoir les reproduire à l'identique/)).toBeVisible();
   await f.locator('input[type="file"]').setInputFiles(["public/images/donut-p8.webp", "public/images/salle-p28.webp"]);
   await expect(f.getByRole("button", { name: "Retirer la photo 2" })).toBeVisible();
-  await finir(page);
+  await finir(page, null);
 
   await expect(page.getByRole("status")).toContainText("Merci, la boutique vous recontacte sous 48 h");
 
@@ -181,14 +232,14 @@ test("ANNIVERSAIRE sur place : envoi de bout en bout + UTM", async ({ page }) =>
     prenom: "Camille",
     nom: "Martin",
     email: "camille@example.com",
-    date_souhaitee: dansJours(10),
+    date_souhaitee: jour,
     source: "Instagram",
     utm_source: "instagram",
     utm_medium: "bio",
     utm_campaign: "noel",
     details: {
       mode: "sur_place",
-      creneau: "14h – 16h",
+      creneau: "14h00 – 15h00",
       enfants: 4,
       adultes: 1,
       age: "7",
@@ -205,7 +256,7 @@ test("ANNIVERSAIRE sur place : envoi de bout en bout + UTM", async ({ page }) =>
   expect(String(mail.json!.subject)).toMatch(/^\[ANNIVERSAIRE\] Camille Martin – /);
   expect(mail.json!.to).toEqual(["donutsdonuts.lyonpartdieu@gmail.com"]);
   expect(mail.json!.reply_to).toBe("camille@example.com");
-  for (const t of ["Sur place", "14h – 16h", "Léa", "Pièce montée", "Chocolatés : Nutella", "Licorne, rose et doré", "utm_source=instagram"]) {
+  for (const t of ["Sur place", "14h00 – 15h00", "Léa", "Pièce montée", "Chocolatés : Nutella", "Licorne, rose et doré", "utm_source=instagram"]) {
     expect(String(mail.json!.text)).toContain(t);
   }
   const uploads = c.filter((x) => x.method === "POST" && x.path.startsWith("/storage/v1/object/inspirations/"));
@@ -381,5 +432,31 @@ test("le serveur refuse une date à moins de 7 jours même hors du site", async 
   });
   expect(res.status()).toBe(422);
   expect((await res.json()).erreurs.date).toMatch(/J\+7/);
+  expect(await appels(page)).toHaveLength(0);
+});
+
+test("le serveur refuse un anniversaire sur place un jour fermé ou trop proche", async ({ page }) => {
+  const base = {
+    type: "anniversaire", t: String(Date.now() - 60_000), prenom: "A", nom: "B", telephone: "0612345678", email: "a@example.com",
+    rgpd: "on", mode: "sur_place", creneau: "14h00 – 15h00", enfants: "2", adultes: "1", nb_donuts: "12", presentation: "boite",
+  };
+  // un mardi à plus de 5 jours
+  let ferme = "";
+  for (let i = 8; i < 22 && !ferme; i++) if (new Date(dansJours(i) + "T00:00:00Z").getUTCDay() === 2) ferme = dansJours(i);
+  const r1 = await page.request.post("/api/demande", { multipart: { ...base, date: ferme } });
+  expect(r1.status()).toBe(422);
+  expect((await r1.json()).erreurs.date).toMatch(/mercredi et le samedi/);
+  // un mercredi/samedi à moins de 5 jours
+  let proche = "";
+  for (let i = 0; i < 5 && !proche; i++) if ([3, 6].includes(new Date(dansJours(i) + "T00:00:00Z").getUTCDay())) proche = dansJours(i);
+  if (proche) {
+    const r2 = await page.request.post("/api/demande", { multipart: { ...base, date: proche } });
+    expect(r2.status()).toBe(422);
+    expect((await r2.json()).erreurs.date).toMatch(/au moins 5 jours/);
+  }
+  // un créneau inventé
+  const r3 = await page.request.post("/api/demande", { multipart: { ...base, date: prochainJourOuvert(5), creneau: "12h00 – 13h00" } });
+  expect(r3.status()).toBe(422);
+  expect((await r3.json()).erreurs.creneau).toBeTruthy();
   expect(await appels(page)).toHaveLength(0);
 });
