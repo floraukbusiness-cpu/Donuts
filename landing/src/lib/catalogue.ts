@@ -99,7 +99,7 @@ export const BOUTIQUE = {
   rue: "17 rue du Docteur Bouchut",
   codePostal: "69003",
   ville: "Lyon",
-  horaires: "Ouvert de 10h à 20h",
+  horaires: "Ouvert du lundi au samedi, de 10h à 20h",
   instagram: "donutsanddonuts_lyonpartdieu",
   email: "donutsdonuts.lyonpartdieu@gmail.com",
 } as const;

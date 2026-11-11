@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { lignesDemande, sujet } from "./email";
-import { aujourdhuiParis, ajouterJours, dateMinimum } from "./dates";
+import { aujourdhuiParis, ajouterJours, dateMinimum, estDimanche } from "./dates";
 import { valider } from "./schema";
 
 describe("dates", () => {
@@ -15,16 +15,29 @@ describe("dates", () => {
   });
 });
 
+const dateOuvrable = () => {
+  let d = ajouterJours(aujourdhuiParis(), 8);
+  while (estDimanche(d)) d = ajouterJours(d, 1);
+  return d;
+};
 const base = {
   prenom: "Camille",
   nom: "Martin",
   telephone: "+33 6 12 34 56 78",
   email: "Camille@Example.com",
-  date: ajouterJours(aujourdhuiParis(), 8),
+  date: dateOuvrable(),
   rgpd: "on",
 };
 
 describe("validation", () => {
+  it("dimanche refusé", () => {
+    // premier dimanche à au moins 8 jours
+    let d = ajouterJours(aujourdhuiParis(), 8);
+    while (!estDimanche(d)) d = ajouterJours(d, 1);
+    const r = valider("pro", { ...base, date: d, type: "pro", societe: "X", secteur: "Entreprise", usage: "Revente", quantite: "50", frequence: "ponctuelle", budget: "200 €", parfums: ["À définir ensemble"] });
+    expect(r.ok).toBe(false);
+    if (!r.ok) expect(r.erreurs.date).toMatch(/dimanche/);
+  });
   it("anniversaire à emporter valide", () => {
     const r = valider("anniversaire", { ...base, type: "anniversaire", mode: "a_emporter", heure_retrait: "16:30", nb_donuts: "12", presentation: "boite" });
     expect(r.ok).toBe(true);

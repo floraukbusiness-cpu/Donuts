@@ -263,7 +263,7 @@ export function FormulaireDemande({ type, utm }: Props) {
           type="date"
           min={minDate || undefined}
           max={maxDate || undefined}
-          aide="Nous avons besoin d'au moins 7 jours pour préparer votre commande : les dates plus proches ne peuvent pas être choisies."
+          aide="Nous avons besoin d'au moins 7 jours pour préparer votre commande : les dates plus proches ne peuvent pas être choisies. La boutique est fermée le dimanche."
           erreur={err("date")}
         />
         {type === "personnalisee" && (

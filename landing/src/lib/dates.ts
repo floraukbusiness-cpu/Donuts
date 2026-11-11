@@ -27,6 +27,12 @@ export function dateMaximum(now: Date = new Date()): string {
   return ajouterJours(aujourdhuiParis(now), 366);
 }
 
+/** La boutique est fermée le dimanche. */
+export function estDimanche(iso: string): boolean {
+  const [y, m, d] = iso.split("-").map(Number);
+  return new Date(Date.UTC(y, m - 1, d)).getUTCDay() === 0;
+}
+
 export function formatDateFr(iso: string): string {
   const [y, m, d] = iso.split("-").map(Number);
   return new Intl.DateTimeFormat("fr-FR", {

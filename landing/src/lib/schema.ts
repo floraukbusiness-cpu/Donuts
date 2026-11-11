@@ -2,7 +2,7 @@
 // (messages d'erreur immédiats) et le serveur (contrôle final, non contournable).
 import { z } from "zod";
 import { MINIMUM_DONUTS, PARFUMS_A_DEFINIR, PRESENTATIONS, SOURCES, TOUS_LES_PARFUMS } from "./catalogue";
-import { dateMaximum, dateMinimum } from "./dates";
+import { dateMaximum, dateMinimum, estDimanche } from "./dates";
 
 export const TYPES = ["anniversaire", "personnalisee", "pro"] as const;
 export type TypeDemande = (typeof TYPES)[number];
@@ -40,7 +40,8 @@ function dateSouhaitee() {
     .string()
     .regex(/^\d{4}-\d{2}-\d{2}$/, "Choisissez une date.")
     .refine((d) => d >= dateMinimum(), "Nous avons besoin d'au moins 7 jours pour préparer votre commande : choisissez une date à partir de J+7.")
-    .refine((d) => d <= dateMaximum(), "Choisissez une date dans les 12 prochains mois.");
+    .refine((d) => d <= dateMaximum(), "Choisissez une date dans les 12 prochains mois.")
+    .refine((d) => !estDimanche(d), "La boutique est fermée le dimanche : choisissez un autre jour.");
 }
 
 const telephone = z

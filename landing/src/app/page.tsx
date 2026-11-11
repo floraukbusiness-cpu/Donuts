@@ -31,7 +31,7 @@ const FAQ = [
   },
   {
     q: "Où récupérer ma commande ?",
-    r: `Les commandes se retirent à la boutique : ${BOUTIQUE.lieu}, ${BOUTIQUE.rue}, ${BOUTIQUE.codePostal} ${BOUTIQUE.ville}. ${BOUTIQUE.horaires}.`,
+    r: `Les commandes se retirent à la boutique : ${BOUTIQUE.lieu}, ${BOUTIQUE.rue}, ${BOUTIQUE.codePostal} ${BOUTIQUE.ville}. ${BOUTIQUE.horaires}, fermé le dimanche.`,
   },
   {
     q: "Comment se passe le paiement ?",

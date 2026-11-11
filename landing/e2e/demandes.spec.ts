@@ -12,6 +12,7 @@ async function appels(page: Page): Promise<Call[]> {
 function dansJours(n: number) {
   const now = new Date(new Date().toLocaleString("en-US", { timeZone: "Europe/Paris" }));
   now.setDate(now.getDate() + n);
+  if (n >= 7 && now.getDay() === 0) now.setDate(now.getDate() + 1); // boutique fermée le dimanche
   return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
 }
 
