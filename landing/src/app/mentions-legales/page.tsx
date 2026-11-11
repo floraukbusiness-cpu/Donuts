@@ -9,17 +9,16 @@ export const metadata: Metadata = {
   alternates: { canonical: "/mentions-legales" },
 };
 
-// ─────────────────────────────────────────────────────────────────────────────
-// À COMPLÉTER : informations de la société qui exploite la boutique de Lyon.
-// Remplacer chaque valeur entre crochets, puis supprimer ce commentaire.
-// ─────────────────────────────────────────────────────────────────────────────
+// Source : registre officiel des entreprises (SIRET 991 118 936 00020).
+// À vérifier par la société : directeur de la publication, capital social et n° de TVA (calculé à partir du SIREN).
 const EDITEUR = {
-  raisonSociale: "[Raison sociale de la société exploitant la boutique]",
-  forme: "[Forme juridique, ex. SAS] au capital de [montant] €",
-  siege: "[Adresse du siège social]",
-  siren: "[SIREN] – RCS [Ville]",
-  tva: "[Numéro de TVA intracommunautaire]",
-  directeur: "[Nom du directeur de la publication]",
+  raisonSociale: "JUST D'OH IT",
+  forme: "SAS, société par actions simplifiée, au capital de [montant du capital] €",
+  siege: "Centre commercial Mériadeck, 57 rue du Château d'Eau, 33000 Bordeaux",
+  siren: "SIREN 991 118 936 – RCS Bordeaux",
+  etablissement: "Établissement de Lyon : SIRET 991 118 936 00020, 17 rue du Docteur Bouchut, 69003 Lyon",
+  tva: "FR09 991118936",
+  directeur: "Cédric Roptin, Président",
 };
 
 const Titre = ({ id, children }: { id?: string; children: React.ReactNode }) => (
@@ -46,6 +45,7 @@ export default function MentionsLegales() {
           <li>{EDITEUR.forme}</li>
           <li>Siège social : {EDITEUR.siege}</li>
           <li>{EDITEUR.siren}</li>
+          <li>{EDITEUR.etablissement}</li>
           <li>TVA : {EDITEUR.tva}</li>
           <li>Directeur de la publication : {EDITEUR.directeur}</li>
           <li>
@@ -53,7 +53,7 @@ export default function MentionsLegales() {
           </li>
         </ul>
         <p className="mt-3">
-          Donuts &amp; Donuts est une marque du réseau DONUTS AND DONUTS (SAS, 1-3 rue des Sept Agaches, 59800 Lille, SIREN 921 971 800).
+          La boutique est exploitée sous la marque Donuts &amp; Donuts (DONUTS AND DONUTS, SAS, 1-3 rue des Sept Agaches, 59800 Lille, SIREN 921 971 800).
         </p>
 
         <Titre>Hébergement</Titre>
