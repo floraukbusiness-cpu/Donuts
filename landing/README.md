@@ -58,6 +58,7 @@ Supabase → **Table Editor** :
 |---|---|
 | Prix, minimum de commande, offre « 12 = 1 offert », présentations, options, **parfums**, adresse, horaires, Instagram | [`src/lib/catalogue.ts`](src/lib/catalogue.ts) |
 | Textes de la page, étapes, FAQ, galerie | [`src/app/page.tsx`](src/app/page.tsx) |
+| Photos du diaporama de chaque carte (Anniversaire, Personnalisée, Pro) | [`src/components/Demandes.tsx`](src/components/Demandes.tsx) : liste `photos` de la carte (une ligne par photo) |
 | Mentions légales (bloc `EDITEUR` **à compléter**) | [`src/app/mentions-legales/page.tsx`](src/app/mentions-legales/page.tsx) |
 | Champs des formulaires et règles (J+7, horaires de retrait…) | [`src/lib/schema.ts`](src/lib/schema.ts), [`src/components/FormulaireDemande.tsx`](src/components/FormulaireDemande.tsx) |
 | Couleurs de la charte | [`src/app/globals.css`](src/app/globals.css) (bloc `@theme`) |

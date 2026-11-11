@@ -2,17 +2,32 @@
 import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 import { UTM_KEYS, type TypeDemande } from "@/lib/schema";
+import { Carrousel, type Photo } from "./Carrousel";
 import { FormulaireDemande } from "./FormulaireDemande";
 
-// Photo de chaque carte : fichier dans public/images (voir README > Photos).
-const CARTES: { type: TypeDemande; emoji: string; titre: string; texte: string; photo: string; cadrage: string; photoFormulaire?: { src: string; alt: string } }[] = [
+// Photos de chaque carte (diaporama) : fichiers dans public/images (voir README > Photos).
+// Pour ajouter une photo, ajouter une ligne dans la liste `photos` de la carte.
+type Carte = {
+  type: TypeDemande;
+  emoji: string;
+  titre: string;
+  texte: string;
+  photos: Photo[];
+  photoFormulaire?: { src: string; alt: string };
+};
+
+const CARTES: Carte[] = [
   {
     type: "anniversaire",
     emoji: "🎂",
     titre: "Anniversaire",
     texte: "Sur place à la boutique ou à emporter.",
-    photo: "/images/anniversaire-princesse.webp",
-    cadrage: "object-[center_35%]",
+    photos: [
+      { src: "/images/anniversaire-princesse.webp", alt: "Enfants en princesses riant devant un plateau de donuts roses à la couronne", position: "center 35%" },
+      { src: "/images/carte-anniversaire.webp", alt: "Pièce montée de donuts fleurie avec le chiffre 10 et « Joyeux anniversaire »", position: "center 55%" },
+      { src: "/images/galerie-plateau-super-heros.webp", alt: "Plateau de donuts super-héros, dont un personnalisé au prénom Ethan", position: "center 78%" },
+      { src: "/images/galerie-anniversaire.webp", alt: "Plateau de donuts colorés d'anniversaire : licorne, princesse, étoiles" },
+    ],
     // Photo affichée au-dessus du formulaire quand la carte est ouverte
     photoFormulaire: {
       src: "/images/anniversaire-super-heros.webp",
@@ -24,16 +39,19 @@ const CARTES: { type: TypeDemande; emoji: string; titre: string; texte: string; 
     emoji: "🎉",
     titre: "Commande personnalisée",
     texte: "Soirée, événement, baptême, mariage, EVJF… À emporter uniquement.",
-    photo: "/images/carte-personnalisee.webp",
-    cadrage: "object-[center_40%]",
+    photos: [
+      { src: "/images/carte-personnalisee.webp", alt: "Pièce montée de donuts décorée de fleurs", position: "center 40%" },
+      { src: "/images/galerie-mariage.webp", alt: "Présentoir de donuts roses et dorés pour un mariage, étiquettes « Bride to be »" },
+      { src: "/images/galerie-bapteme-1.webp", alt: "Donuts pastel vert et blanc sur présentoir pour un baptême" },
+      { src: "/images/galerie-bapteme-2.webp", alt: "Donuts bleu ciel et blancs personnalisés au prénom pour un baptême" },
+    ],
   },
   {
     type: "pro",
     emoji: "💼",
     titre: "Vous êtes un professionnel",
     texte: "Traiteur, wedding planner, concept store, entreprise…",
-    photo: "/images/carte-pro.webp",
-    cadrage: "object-center",
+    photos: [{ src: "/images/carte-pro.webp", alt: "Donuts bleus et blancs personnalisés aux couleurs d'une entreprise" }],
   },
 ];
 
@@ -86,24 +104,19 @@ export function Demandes() {
           const estActif = actif === c.type;
           return (
             <li key={c.type}>
-              <button
-                type="button"
-                onClick={() => ouvrir(c.type)}
-                aria-expanded={estActif}
-                aria-controls="formulaire-demande"
-                className={`flex h-full w-full flex-col overflow-hidden rounded-3xl border-[3px] bg-white text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md ${
+              <div
+                className={`flex h-full flex-col overflow-hidden rounded-3xl border-[3px] bg-white shadow-sm transition hover:shadow-md ${
                   estActif ? "border-magenta ring-4 ring-magenta/20" : "border-transparent"
                 }`}
               >
-                <Image
-                  src={c.photo}
-                  alt=""
-                  width={800}
-                  height={600}
-                  sizes="(min-width: 768px) 33vw, 100vw"
-                  className={`aspect-[16/10] w-full object-cover md:aspect-[4/3] ${c.cadrage}`}
-                />
-                <span className="block p-5 md:p-6">
+                <Carrousel photos={c.photos} titre={c.titre} proportions="aspect-[16/10] md:aspect-[4/3]" />
+                <button
+                  type="button"
+                  onClick={() => ouvrir(c.type)}
+                  aria-expanded={estActif}
+                  aria-controls="formulaire-demande"
+                  className="block w-full flex-1 p-5 text-left md:p-6"
+                >
                   <span className="block font-titre text-xl font-semibold text-violet">
                     <span aria-hidden="true">{c.emoji} </span>
                     {c.titre}
@@ -112,8 +125,8 @@ export function Demandes() {
                   <span className="mt-2 inline-block font-bold text-magenta-fonce">
                     {estActif ? "Formulaire ouvert ↓" : "Faire ma demande →"}
                   </span>
-                </span>
-              </button>
+                </button>
+              </div>
             </li>
           );
         })}

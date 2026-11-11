@@ -237,6 +237,37 @@ test("photos : 3 maximum, retrait possible", async ({ page }) => {
   await expect(f.getByText("Ajouter une autre photo")).toBeVisible();
 });
 
+test("cartes : diaporama de photos (clic, flèches, points) sans ouvrir le formulaire", async ({ page }) => {
+  await page.goto("/");
+  const carrousel = page.getByRole("region", { name: /Photos : Anniversaire/ });
+  const statut = carrousel.locator("p[aria-live]");
+  await expect(statut).toHaveText("Photo 1 sur 4");
+  await carrousel.getByRole("button", { name: "Photo suivante" }).click();
+  await expect(statut).toHaveText("Photo 2 sur 4");
+  await carrousel.getByRole("img").nth(1).click(); // un clic sur l'image visible fait avancer
+  await expect(statut).toHaveText("Photo 3 sur 4");
+  await carrousel.getByRole("button", { name: "Photo précédente" }).click();
+  await expect(statut).toHaveText("Photo 2 sur 4");
+  await carrousel.getByRole("button", { name: "Afficher la photo 4" }).click();
+  await expect(statut).toHaveText("Photo 4 sur 4");
+  await carrousel.getByRole("button", { name: "Photo suivante" }).click(); // reboucle
+  await expect(statut).toHaveText("Photo 1 sur 4");
+  // Clavier : on atteint la zone avec Tab, puis flèche droite
+  await carrousel.getByRole("group").first().evaluate((el) => (el.parentElement as HTMLElement).focus());
+  await page.keyboard.press("ArrowRight");
+  await expect(statut).toHaveText("Photo 2 sur 4");
+  // Clics rapides : deux « suivante » d'affilée = deux photos plus loin
+  const suivante = carrousel.getByRole("button", { name: "Photo suivante" });
+  await suivante.click();
+  await suivante.click();
+  await expect(statut).toHaveText("Photo 4 sur 4");
+  await suivante.click();
+  await expect(statut).toHaveText("Photo 1 sur 4");
+  await expect(page.locator("form")).toHaveCount(0); // aucun formulaire ouvert par ces clics
+  // La carte pro n'a qu'une photo : pas de flèches
+  await expect(page.getByRole("region", { name: /Photos : Vous êtes un professionnel/ }).getByRole("button")).toHaveCount(0);
+});
+
 test("PRO récurrent, parfums à définir : envoi de bout en bout", async ({ page }) => {
   await ouvrir(page, /Vous êtes un professionnel/);
   await coordonnees(page);
