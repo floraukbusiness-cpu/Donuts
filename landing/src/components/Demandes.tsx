@@ -19,8 +19,8 @@ const CARTES: { type: TypeDemande; emoji: string; titre: string; texte: string; 
     emoji: "🎉",
     titre: "Commande personnalisée",
     texte: "Soirée, événement, baptême, mariage, EVJF… À emporter uniquement.",
-    photo: "/images/donut-p25.webp", // provisoire : remplacer par carte-personnalisee.webp
-    cadrage: "object-contain bg-poudre",
+    photo: "/images/carte-personnalisee.webp",
+    cadrage: "object-[center_40%]",
   },
   {
     type: "pro",
