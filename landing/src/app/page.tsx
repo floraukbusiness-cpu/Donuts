@@ -1,5 +1,6 @@
 import Image from "next/image";
 import { Demandes } from "@/components/Demandes";
+import { Galerie } from "@/components/Galerie";
 import { PiedDePage } from "@/components/PiedDePage";
 import { BOUTIQUE, CATEGORIES_PARFUMS, DECO, MINIMUM_DONUTS, OFFRE_DOUZE, PRESENTATIONS, PRIX } from "@/lib/catalogue";
 
@@ -8,6 +9,8 @@ const GALERIE = [
   { src: "/images/galerie-anniversaire.webp", alt: "Plateau de donuts colorés d'anniversaire : licorne, princesse, étoiles et ballons" },
   { src: "/images/galerie-bapteme-1.webp", alt: "Donuts pastel vert et blanc sur présentoir pour un baptême" },
   { src: "/images/galerie-bapteme-2.webp", alt: "Donuts bleu ciel et blancs personnalisés au prénom pour un baptême" },
+  { src: "/images/galerie-brochettes.webp", alt: "Bouquet de brochettes de mini donuts roses et de bonbons, emballé dans du papier Donuts & Donuts" },
+  { src: "/images/galerie-donuts-bonbons.webp", alt: "Douze donuts au glaçage rouge décorés d'une sucette en cœur, d'un bonbon et d'une feuille" },
   { src: "/images/galerie-plateau-super-heros.webp", alt: "Plateau de six donuts super-héros rouges, bleus et jaunes, dont un personnalisé au prénom Ethan" },
   { src: "/images/carte-anniversaire.webp", alt: "Pièce montée de donuts fleurie pour un anniversaire, avec le chiffre 10 et le mot « Joyeux anniversaire »" },
   { src: "/images/carte-personnalisee.webp", alt: "Pièce montée de donuts décorée de fleurs" },
@@ -112,21 +115,7 @@ export default function Page() {
             <h2 id="titre-galerie" className="text-center text-3xl font-bold text-violet md:text-4xl">
               Nos réalisations
             </h2>
-            <ul className="mt-8 grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-4">
-              {GALERIE.map((g) => (
-                <li key={g.src} className="overflow-hidden rounded-2xl bg-white shadow-sm">
-                  <Image
-                    src={g.src}
-                    alt={g.alt}
-                    width={600}
-                    height={600}
-                    loading="lazy"
-                    sizes="(min-width: 768px) 25vw, 50vw"
-                    className="aspect-square h-auto w-full object-cover"
-                  />
-                </li>
-              ))}
-            </ul>
+            <Galerie photos={GALERIE} />
             <p className="mt-6 text-center">
               Encore plus de photos sur{" "}
               <a href={`https://www.instagram.com/${BOUTIQUE.instagram}/`} className="font-bold text-magenta-fonce underline" target="_blank" rel="noopener noreferrer">

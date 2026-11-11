@@ -268,6 +268,39 @@ test("cartes : diaporama de photos (clic, flèches, points) sans ouvrir le formu
   await expect(page.getByRole("region", { name: /Photos : Vous êtes un professionnel/ }).getByRole("button")).toHaveCount(0);
 });
 
+test("galerie : 4 photos visibles sur grand écran, défilement pour voir les autres", async ({ page }) => {
+  await page.goto("/");
+  const galerie = page.getByRole("region", { name: /Galerie de photos/ });
+  const piste = galerie.locator("ul");
+  await piste.scrollIntoViewIfNeeded();
+  const largeur = page.viewportSize()!.width;
+  const photos = piste.locator("li");
+  expect(await photos.count()).toBeGreaterThan(4);
+  const visible = async (i: number) =>
+    photos.nth(i).evaluate((li) => {
+      const r = li.getBoundingClientRect();
+      const c = li.parentElement!.getBoundingClientRect();
+      return r.left >= c.left - 1 && r.right <= c.right + 1;
+    });
+  expect(await piste.evaluate((el) => el.scrollWidth > el.clientWidth)).toBe(true); // il y a de quoi défiler
+  if (largeur >= 1024) {
+    for (let i = 0; i < 4; i++) expect(await visible(i)).toBe(true);
+    expect(await visible(4)).toBe(false);
+    await expect(galerie.getByRole("button", { name: "Photos précédentes" })).toHaveCount(0);
+    await galerie.getByRole("button", { name: "Photos suivantes" }).click();
+    await expect.poll(() => piste.evaluate((el) => el.scrollLeft)).toBeGreaterThan(100);
+    await expect(galerie.getByRole("button", { name: "Photos précédentes" })).toBeVisible();
+  } else {
+    // Téléphone : plus d'une photo mais pas la suivante entière (elle dépasse), balayage natif
+    expect(await visible(0)).toBe(true);
+    expect(await visible(1)).toBe(false);
+    await piste.evaluate((el) => el.scrollBy({ left: el.clientWidth, behavior: "instant" }));
+    await expect.poll(() => piste.evaluate((el) => el.scrollLeft)).toBeGreaterThan(100);
+  }
+  const deborde = await page.evaluate(() => document.documentElement.scrollWidth > document.documentElement.clientWidth);
+  expect(deborde).toBe(false);
+});
+
 test("PRO récurrent, parfums à définir : envoi de bout en bout", async ({ page }) => {
   await ouvrir(page, /Vous êtes un professionnel/);
   await coordonnees(page);
