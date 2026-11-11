@@ -11,12 +11,12 @@ const CARTES: { type: TypeDemande; emoji: string; titre: string; texte: string; 
     emoji: "🎂",
     titre: "Anniversaire",
     texte: "Sur place à la boutique ou à emporter.",
-    photo: "/images/anniversaire-super-heros.webp",
-    cadrage: "object-[center_78%]",
+    photo: "/images/anniversaire-princesse.webp",
+    cadrage: "object-[center_35%]",
     // Photo affichée au-dessus du formulaire quand la carte est ouverte
     photoFormulaire: {
-      src: "/images/carte-anniversaire.webp",
-      alt: "Pièce montée de donuts fleurie pour un anniversaire, avec le chiffre 10 et le mot « Joyeux anniversaire »",
+      src: "/images/anniversaire-super-heros.webp",
+      alt: "Enfants déguisés en super-héros riant autour d'un plateau de donuts rouges, bleus et jaunes",
     },
   },
   {
@@ -130,10 +130,10 @@ export function Demandes() {
               <Image
                 src={carte.photoFormulaire.src}
                 alt={carte.photoFormulaire.alt}
-                width={900}
-                height={1200}
+                width={1200}
+                height={800}
                 sizes="(min-width: 768px) 768px, 100vw"
-                className="mx-auto mb-4 h-64 w-full rounded-3xl object-cover object-[center_55%] shadow-sm sm:h-80 md:max-w-3xl"
+                className="mx-auto mb-4 h-64 w-full rounded-3xl object-cover object-[center_35%] shadow-sm sm:h-80 md:max-w-3xl"
               />
             )}
             {/* key : chaque type a son propre formulaire, remis à zéro quand on change */}

@@ -8,6 +8,7 @@ const GALERIE = [
   { src: "/images/galerie-anniversaire.webp", alt: "Plateau de donuts colorés d'anniversaire : licorne, princesse, étoiles et ballons" },
   { src: "/images/galerie-bapteme-1.webp", alt: "Donuts pastel vert et blanc sur présentoir pour un baptême" },
   { src: "/images/galerie-bapteme-2.webp", alt: "Donuts bleu ciel et blancs personnalisés au prénom pour un baptême" },
+  { src: "/images/galerie-plateau-super-heros.webp", alt: "Plateau de six donuts super-héros rouges, bleus et jaunes, dont un personnalisé au prénom Ethan" },
   { src: "/images/carte-anniversaire.webp", alt: "Pièce montée de donuts fleurie pour un anniversaire, avec le chiffre 10 et le mot « Joyeux anniversaire »" },
   { src: "/images/carte-personnalisee.webp", alt: "Pièce montée de donuts décorée de fleurs" },
 ];
