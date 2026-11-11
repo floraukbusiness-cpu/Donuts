@@ -4,18 +4,18 @@ import { PiedDePage } from "@/components/PiedDePage";
 import { BOUTIQUE, CATEGORIES_PARFUMS, DECO, MINIMUM_DONUTS, OFFRE_DOUZE, PRESENTATIONS, PRIX } from "@/lib/catalogue";
 
 const GALERIE = [
+  { src: "/images/galerie-mariage.webp", alt: "Présentoir de donuts roses et dorés pour un mariage, avec étiquettes « Bride to be »" },
+  { src: "/images/galerie-anniversaire.webp", alt: "Plateau de donuts colorés d'anniversaire : licorne, princesse, étoiles et ballons" },
+  { src: "/images/galerie-bapteme-1.webp", alt: "Donuts pastel vert et blanc sur présentoir pour un baptême" },
+  { src: "/images/galerie-bapteme-2.webp", alt: "Donuts bleu ciel et blancs personnalisés au prénom pour un baptême" },
   { src: "/images/scene-p35.webp", alt: "Donut au chocolat servi sur une assiette rose" },
   { src: "/images/donut-p2.webp", alt: "Donut glaçage blanc et éclats de fraise" },
   { src: "/images/donut-p8.webp", alt: "Donut aux vermicelles colorés et bonbons fraise" },
-  { src: "/images/salle-p28.webp", alt: "Salle rose d'une boutique Donuts & Donuts avec places assises" },
   { src: "/images/donut-p25.webp", alt: "Donut rose décoré de pétales de rose et de meringues" },
   { src: "/images/donut-p7.webp", alt: "Donut chocolat noisettes surmonté d'une barre chocolatée" },
   { src: "/images/donut-p29.webp", alt: "Donut glaçage violet décoré de chocolat rose" },
   { src: "/images/donut-p32.webp", alt: "Donut à la pistache" },
-  { src: "/images/salle-p19.webp", alt: "Intérieur d'une boutique Donuts & Donuts, décor fleuri rose" },
   { src: "/images/donut-p31.webp", alt: "Donut chocolat et barres chocolatées" },
-  { src: "/images/donut-p16.webp", alt: "Donut aux céréales et carré de chocolat" },
-  { src: "/images/donut-p12.webp", alt: "Donut aux pépites de chocolat et biscuit cacao" },
 ];
 
 const ETAPES = [

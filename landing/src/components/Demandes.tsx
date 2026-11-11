@@ -27,7 +27,7 @@ const CARTES: { type: TypeDemande; emoji: string; titre: string; texte: string; 
     emoji: "💼",
     titre: "Vous êtes un professionnel",
     texte: "Traiteur, wedding planner, concept store, entreprise…",
-    photo: "/images/salle-p28.webp", // provisoire : remplacer par carte-pro.webp
+    photo: "/images/carte-pro.webp",
     cadrage: "object-center",
   },
 ];
