@@ -4,16 +4,17 @@ import { Galerie } from "@/components/Galerie";
 import { PiedDePage } from "@/components/PiedDePage";
 import { BOUTIQUE, CATEGORIES_PARFUMS, DECO, MINIMUM_DONUTS, OFFRE_DOUZE, PRESENTATIONS, PRIX } from "@/lib/catalogue";
 
+// Ordre : on alterne une illustration (IA) et une vraie photo de la boutique.
 const GALERIE = [
-  { src: "/images/galerie-mariage.webp", alt: "Présentoir de donuts roses et dorés pour un mariage, avec étiquettes « Bride to be »" },
-  { src: "/images/galerie-anniversaire.webp", alt: "Plateau de donuts colorés d'anniversaire : licorne, princesse, étoiles et ballons" },
-  { src: "/images/galerie-bapteme-1.webp", alt: "Donuts pastel vert et blanc sur présentoir pour un baptême" },
-  { src: "/images/galerie-bapteme-2.webp", alt: "Donuts bleu ciel et blancs personnalisés au prénom pour un baptême" },
-  { src: "/images/galerie-brochettes.webp", alt: "Bouquet de brochettes de mini donuts roses et de bonbons, emballé dans du papier Donuts & Donuts" },
-  { src: "/images/galerie-donuts-bonbons.webp", alt: "Douze donuts au glaçage rouge décorés d'une sucette en cœur, d'un bonbon et d'une feuille" },
-  { src: "/images/galerie-plateau-super-heros.webp", alt: "Plateau de six donuts super-héros rouges, bleus et jaunes, dont un personnalisé au prénom Ethan" },
-  { src: "/images/carte-anniversaire.webp", alt: "Pièce montée de donuts fleurie pour un anniversaire, avec le chiffre 10 et le mot « Joyeux anniversaire »" },
-  { src: "/images/carte-personnalisee.webp", alt: "Pièce montée de donuts décorée de fleurs" },
+  { src: "/images/galerie-mariage.webp", alt: "Présentoir de donuts roses et dorés pour un mariage, avec étiquettes « Bride to be »" }, // IA
+  { src: "/images/carte-anniversaire.webp", alt: "Pièce montée de donuts fleurie pour un anniversaire, avec le chiffre 10 et le mot « Joyeux anniversaire »" }, // vraie
+  { src: "/images/galerie-anniversaire.webp", alt: "Plateau de donuts colorés d'anniversaire : licorne, princesse, étoiles et ballons" }, // IA
+  { src: "/images/galerie-brochettes.webp", alt: "Bouquet de brochettes de mini donuts roses et de bonbons, emballé dans du papier Donuts & Donuts" }, // vraie
+  { src: "/images/galerie-bapteme-1.webp", alt: "Donuts pastel vert et blanc sur présentoir pour un baptême" }, // IA
+  { src: "/images/galerie-donuts-bonbons.webp", alt: "Douze donuts au glaçage rouge décorés d'une sucette en cœur, d'un bonbon et d'une feuille" }, // vraie
+  { src: "/images/galerie-bapteme-2.webp", alt: "Donuts bleu ciel et blancs personnalisés au prénom pour un baptême" }, // IA
+  { src: "/images/carte-personnalisee.webp", alt: "Pièce montée de donuts décorée de fleurs" }, // vraie
+  { src: "/images/galerie-plateau-super-heros.webp", alt: "Plateau de six donuts super-héros rouges, bleus et jaunes, dont un personnalisé au prénom Ethan" }, // IA
 ];
 
 const ETAPES = [
