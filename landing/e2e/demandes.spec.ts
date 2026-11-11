@@ -62,6 +62,8 @@ test("page d'accueil : contenu, SEO, pas de défilement horizontal", async ({ pa
   await expect(page.getByText("3,50 €").first()).toBeVisible();
   await expect(page.getByText("1,75 €").first()).toBeVisible();
   await expect(page.getByText("Champagne").first()).toBeVisible();
+  await expect(page.getByText("Ferrero Rocher").first()).toBeVisible();
+  await expect(page.getByText("Rocher", { exact: true })).toHaveCount(0);
   await expect(page).toHaveTitle(/Donuts pour anniversaires, événements et professionnels à Lyon Part-Dieu/);
   await expect(page.locator('meta[property="og:image"]')).toHaveAttribute("content", /opengraph-image/);
   await expect(page.getByRole("link", { name: /Instagram @donutsanddonuts_lyonpartdieu/ }).first()).toBeVisible();
@@ -140,6 +142,9 @@ test("ANNIVERSAIRE sur place : envoi de bout en bout + UTM", async ({ page }) =>
   await cocherParfum(page, "Les Chocolatés", "Nutella");
   await cocherParfum(page, "Le Festif", "Champagne");
   await f.locator('[name="theme"]').fill("Licorne, rose et doré");
+  await expect(f.getByText(/sans pouvoir les reproduire à l'identique/)).toBeVisible();
+  await f.locator('input[type="file"]').setInputFiles(["public/images/donut-p8.webp", "public/images/salle-p28.webp"]);
+  await expect(f.getByRole("button", { name: "Retirer la photo 2" })).toBeVisible();
   await finir(page);
 
   await expect(page.getByRole("status")).toContainText("Merci, la boutique vous recontacte sous 48 h");
@@ -179,6 +184,10 @@ test("ANNIVERSAIRE sur place : envoi de bout en bout + UTM", async ({ page }) =>
   for (const t of ["Sur place", "14h – 16h", "Léa", "Pièce montée", "Chocolatés : Nutella", "Licorne, rose et doré", "utm_source=instagram"]) {
     expect(String(mail.json!.text)).toContain(t);
   }
+  const uploads = c.filter((x) => x.method === "POST" && x.path.startsWith("/storage/v1/object/inspirations/"));
+  expect(uploads).toHaveLength(2);
+  expect((insert.json!.details as { inspirations: string[] }).inspirations).toHaveLength(2);
+  expect(String(mail.json!.text)).toContain("Photo d'inspiration 2");
   expect(c.some((x) => x.method === "PATCH")).toBe(true); // statut « e-mail envoyé » mis à jour
   // Une seule notification : pas d'e-mail au client
   expect(c.filter((x) => x.path === "/emails")).toHaveLength(1);
@@ -191,7 +200,7 @@ test("PERSONNALISÉE avec image d'inspiration : envoi de bout en bout", async ({
   await page.getByLabel("Autre", { exact: true }).check();
   await f.locator('[name="evenement_autre"]').fill("Gender reveal");
   await f.locator('[name="theme"]').fill("Bleu et rose, message « Boy or girl ? »");
-  await f.locator('[name="inspiration"]').setInputFiles("public/images/donut-p2.webp");
+  await f.locator('input[type="file"]').setInputFiles("public/images/donut-p2.webp");
   await f.locator('[name="nb_minis"]').fill("24");
   await page.getByLabel(/Bouquet de brochettes/).check();
   await cocherParfum(page, "Les Fruités", "Framboise");
@@ -201,18 +210,30 @@ test("PERSONNALISÉE avec image d'inspiration : envoi de bout en bout", async ({
   await expect(page.getByRole("status")).toContainText("Merci, la boutique vous recontacte sous 48 h");
   const c = await appels(page);
   const upload = c.find((x) => x.method === "POST" && x.path.startsWith("/storage/v1/object/inspirations/"))!;
-  expect(upload.headers["content-type"]).toBe("image/webp");
+  expect(["image/webp", "image/jpeg"]).toContain(upload.headers["content-type"]);
   expect(upload.size).toBeGreaterThan(1000);
   const insert = c.find((x) => x.path === "/rest/v1/demandes")!;
   expect(insert.json).toMatchObject({
     type: "personnalisee",
-    image_path: expect.stringMatching(/\.webp$/),
+    image_path: expect.stringMatching(/\.(webp|jpg)$/),
     details: { evenement: "Autre", evenement_autre: "Gender reveal", nb_minis: 24, presentation: "brochettes", heure_retrait: "11:30" },
   });
   const mail = c.find((x) => x.path === "/emails")!;
   expect(String(mail.json!.subject)).toMatch(/^\[PERSONNALISÉE\] Camille Martin – /);
-  expect(String(mail.json!.html)).toContain("Voir l'image");
+  expect(String(mail.json!.html)).toContain("Voir la photo");
   expect(String(mail.json!.text)).toContain("Autre : Gender reveal");
+});
+
+test("photos : 3 maximum, retrait possible", async ({ page }) => {
+  const f = await ouvrir(page, /Anniversaire/);
+  const input = f.locator('input[type="file"]');
+  await input.setInputFiles(["public/images/donut-p2.webp", "public/images/donut-p7.webp", "public/images/donut-p8.webp", "public/images/donut-p12.webp"]);
+  await expect(f.getByText(/3 photos maximum/)).toBeVisible();
+  await expect(f.getByRole("img", { name: /Photo ajoutée/ })).toHaveCount(3);
+  await expect(input).toHaveCount(0); // bouton d'ajout masqué une fois plein
+  await f.getByRole("button", { name: "Retirer la photo 1" }).click();
+  await expect(f.getByRole("img", { name: /Photo ajoutée/ })).toHaveCount(2);
+  await expect(f.getByText("Ajouter une autre photo")).toBeVisible();
 });
 
 test("PRO récurrent, parfums à définir : envoi de bout en bout", async ({ page }) => {

@@ -7,7 +7,8 @@ import { enregistrerDemande, envoyerEmail, marquerEmailEnvoye, stockerImage } fr
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-const IMAGE_MAX = 5 * 1024 * 1024;
+const IMAGE_MAX = 2 * 1024 * 1024; // photos déjà réduites dans le navigateur
+const IMAGES_MAX = 3;
 const IMAGE_TYPES = new Set(["image/jpeg", "image/png", "image/webp", "image/heic", "image/heif"]);
 const DELAI_MIN_REMPLISSAGE_MS = 3000; // un humain met plus de 3 s à remplir le formulaire
 
@@ -35,16 +36,19 @@ export async function POST(req: Request) {
   if (!v.ok) return NextResponse.json({ ok: false, erreurs: v.erreurs }, { status: 422 });
   const d = v.demande;
 
-  // ── Image d'inspiration (commande personnalisée uniquement, facultative)
-  const fichier = type === "personnalisee" ? fd.get("inspiration") : null;
-  let image: { path: string; url: string } | null = null;
-  if (fichier instanceof File && fichier.size > 0) {
-    if (fichier.size > IMAGE_MAX) return NextResponse.json({ ok: false, erreurs: { inspiration: "Image trop lourde (5 Mo maximum)." } }, { status: 422 });
-    if (!IMAGE_TYPES.has(fichier.type)) return NextResponse.json({ ok: false, erreurs: { inspiration: "Format accepté : JPG, PNG, WebP ou HEIC." } }, { status: 422 });
+  // ── Photos d'inspiration (anniversaire et commande personnalisée, facultatives)
+  const fichiers = type === "pro" ? [] : fd.getAll("inspiration").filter((f): f is File => f instanceof File && f.size > 0);
+  if (fichiers.length > IMAGES_MAX) return NextResponse.json({ ok: false, erreurs: { inspiration: `${IMAGES_MAX} photos maximum.` } }, { status: 422 });
+  for (const f of fichiers) {
+    if (f.size > IMAGE_MAX) return NextResponse.json({ ok: false, erreurs: { inspiration: "Photo trop lourde." } }, { status: 422 });
+    if (!IMAGE_TYPES.has(f.type)) return NextResponse.json({ ok: false, erreurs: { inspiration: "Format accepté : JPG, PNG, WebP ou HEIC." } }, { status: 422 });
+  }
+  const images: { path: string; url: string }[] = [];
+  for (const f of fichiers) {
     try {
-      image = await stockerImage(fichier);
+      images.push(await stockerImage(f));
     } catch (e) {
-      console.error("[demande] image non stockée", e); // la demande passe quand même
+      console.error("[demande] photo non stockée", e); // la demande passe quand même
     }
   }
 
@@ -64,8 +68,8 @@ export async function POST(req: Request) {
     date_souhaitee: date,
     message: message || null,
     source: source || null,
-    details,
-    image_path: image?.path ?? null,
+    details: images.length ? { ...details, inspirations: images.map((i) => i.path) } : details,
+    image_path: images[0]?.path ?? null,
     ...utm,
     email_envoye: false,
   };
@@ -80,7 +84,7 @@ export async function POST(req: Request) {
 
   let emailOk = false;
   try {
-    const { html, text } = corpsEmail(d, utm, image?.url ?? null);
+    const { html, text } = corpsEmail(d, utm, images.map((i) => i.url));
     await envoyerEmail({ subject: sujet(d), html, text, replyTo: email });
     emailOk = true;
     if (id) await marquerEmailEnvoye(id).catch((e) => console.error("[demande] statut e-mail non mis à jour", e));

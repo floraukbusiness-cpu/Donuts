@@ -16,8 +16,8 @@ import {
 } from "@/lib/schema";
 import { ChoixParfums } from "./ChoixParfums";
 import { Champ, Choix, Erreur, Liste, Zone } from "./champs";
-
-const IMAGE_MAX = 5 * 1024 * 1024;
+import { PhotosInspiration } from "./PhotosInspiration";
+import { PHOTOS_TOTAL_MAX_OCTETS } from "@/lib/photos";
 
 type Props = { type: TypeDemande; utm: Partial<Record<(typeof UTM_KEYS)[number], string>> };
 
@@ -36,6 +36,7 @@ export function FormulaireDemande({ type, utm }: Props) {
   const [evenement, setEvenement] = useState("");
   const [secteur, setSecteur] = useState("");
   const [frequence, setFrequence] = useState("");
+  const [photos, setPhotos] = useState<File[]>([]);
 
   useEffect(() => {
     setDebut(Date.now());
@@ -56,7 +57,7 @@ export function FormulaireDemande({ type, utm }: Props) {
     const champs = Object.keys(errs);
     // Ordre d'apparition dans le formulaire
     const el = Array.from(form.querySelectorAll<HTMLElement>("input, select, textarea")).find((e) =>
-      champs.includes(e.getAttribute("name") ?? ""),
+      champs.includes(e.getAttribute("name") ?? e.getAttribute("data-champ") ?? ""),
     );
     el?.focus();
     el?.scrollIntoView({ block: "center" });
@@ -71,8 +72,7 @@ export function FormulaireDemande({ type, utm }: Props) {
 
     const v = valider(type, formDataToObject(fd));
     const errs: ErreursChamps = v.ok ? {} : { ...v.erreurs };
-    const img = fd.get("inspiration");
-    if (img instanceof File && img.size > IMAGE_MAX) errs.inspiration = "Image trop lourde (5 Mo maximum).";
+    if (photos.reduce((t, f) => t + f.size, 0) > PHOTOS_TOTAL_MAX_OCTETS) errs.inspiration = "Photos trop lourdes : retirez-en une.";
     if (Object.keys(errs).length) {
       setErreurs(errs);
       setErreurGlobale(`Il manque des informations : ${Object.keys(errs).length} champ${Object.keys(errs).length > 1 ? "s" : ""} à corriger.`);
@@ -81,6 +81,7 @@ export function FormulaireDemande({ type, utm }: Props) {
     }
     setErreurs({});
     setEtat("envoi");
+    for (const p of photos) fd.append("inspiration", p, p.name);
     try {
       const res = await fetch("/api/demande", { method: "POST", body: fd });
       const data = (await res.json().catch(() => ({}))) as { ok?: boolean; erreurs?: ErreursChamps; erreur?: string };
@@ -216,17 +217,7 @@ export function FormulaireDemande({ type, utm }: Props) {
           />
           {evenement === "Autre" && <Champ name="evenement_autre" label="Précisez l'événement" requis erreur={err("evenement_autre")} />}
           <Zone name="theme" label="Thème, couleurs, message ou décor souhaité" requis aide="Plus c'est précis, mieux c'est !" erreur={err("theme")} />
-          <div>
-            <Champ
-              name="inspiration"
-              label="Image d'inspiration"
-              type="file"
-              accept="image/jpeg,image/png,image/webp,image/heic,image/heif"
-              aide="Une photo ou capture d'écran (JPG, PNG, WebP ou HEIC, 5 Mo maximum)."
-              erreur={err("inspiration")}
-              className="champ file:mr-3 file:rounded-full file:border-0 file:bg-poudre file:px-4 file:py-2 file:font-bold file:text-violet"
-            />
-          </div>
+          <PhotosInspiration fichiers={photos} onChange={setPhotos} erreur={err("inspiration")} />
         </Groupe>
       )}
 
@@ -254,7 +245,12 @@ export function FormulaireDemande({ type, utm }: Props) {
             </span>
           </label>
           <ChoixParfums erreur={err("parfums")} />
-          {type === "anniversaire" && <Zone name="theme" label="Thème et couleurs souhaités" rows={2} erreur={err("theme")} />}
+          {type === "anniversaire" && (
+            <>
+              <Zone name="theme" label="Thème et couleurs souhaités" rows={2} erreur={err("theme")} />
+              <PhotosInspiration fichiers={photos} onChange={setPhotos} erreur={err("inspiration")} />
+            </>
+          )}
         </Groupe>
       )}
 

@@ -89,9 +89,9 @@ export function sujet(d: Demande): string {
 const esc = (s: string) =>
   s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 
-export function corpsEmail(d: Demande, utm: Utm, imageUrl: string | null) {
+export function corpsEmail(d: Demande, utm: Utm, imageUrls: string[]) {
   const lignes = lignesDemande(d);
-  if (imageUrl) lignes.push(["Image d'inspiration", imageUrl]);
+  imageUrls.forEach((u, i) => lignes.push([`Photo d'inspiration ${i + 1}`, u]));
   const utmTxt = Object.entries(utm)
     .filter(([, v]) => v)
     .map(([k, v]) => `${k}=${v}`)
@@ -105,7 +105,7 @@ export function corpsEmail(d: Demande, utm: Utm, imageUrl: string | null) {
 
   const rows = lignes
     .map(([k, v]) => {
-      const val = k === "Image d'inspiration" ? `<a href="${esc(v)}">Voir l'image</a>` : esc(v).replace(/\n/g, "<br>");
+      const val = k.startsWith("Photo d'inspiration") ? `<a href="${esc(v)}">Voir la photo</a>` : esc(v).replace(/\n/g, "<br>");
       return `<tr><td style="padding:6px 12px 6px 0;color:#6b2160;font-weight:bold;vertical-align:top;white-space:nowrap">${esc(k)}</td><td style="padding:6px 0;color:#222">${val}</td></tr>`;
     })
     .join("");

@@ -37,7 +37,7 @@ export const CATEGORIES_PARFUMS: readonly CategorieParfums[] = [
     parfums: [
       "M'M's", "Nutella", "Chocolat cacahuète", "Chocolat Daim", "Chocolat Spéculoos",
       "Chocolat noisette", "Chocolat orange", "Chocolat banane", "Chocolat ourson",
-      "Chocolat pop corn", "Kinder Maxi", "Kinder Schokobon", "Rocher", "Kitkat", "Brownie",
+      "Chocolat pop corn", "Kinder Maxi", "Kinder Schokobon", "Kitkat", "Brownie",
       "Maltesers", "Napolitain", "Chocolat blanc", "Chocolat blanc cerise", "Chocolat blanc rose",
       "Choco blanc framboise", "Chocolat blanc fraise", "Raffaello",
     ],
@@ -79,7 +79,7 @@ export const CATEGORIES_PARFUMS: readonly CategorieParfums[] = [
     titre: "Le Festif",
     emoji: "🎉",
     note: "",
-    parfums: ["Champagne"],
+    parfums: ["Champagne", "Ferrero Rocher"],
   },
 ];
 
