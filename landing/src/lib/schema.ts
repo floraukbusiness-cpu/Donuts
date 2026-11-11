@@ -1,7 +1,7 @@
 // Règles de validation des 3 formulaires, partagées entre le navigateur
 // (messages d'erreur immédiats) et le serveur (contrôle final, non contournable).
 import { z } from "zod";
-import { MINIMUM_DONUTS, PARFUMS_A_DEFINIR, PRESENTATIONS, SOURCES, TOUS_LES_PARFUMS } from "./catalogue";
+import { MAX_ADULTES_SUR_PLACE, MAX_ENFANTS_SUR_PLACE, MINIMUM_DONUTS, PARFUMS_A_DEFINIR, PRESENTATIONS, SOURCES, TOUS_LES_PARFUMS } from "./catalogue";
 import { dateMaximum, dateMinimum, estDimanche } from "./dates";
 
 export const TYPES = ["anniversaire", "personnalisee", "pro"] as const;
@@ -113,6 +113,8 @@ export const anniversaireSchema = z
     if (v.mode === "sur_place") {
       if (!(CRENEAUX as readonly string[]).includes(v.creneau)) ctx.addIssue({ code: "custom", path: ["creneau"], message: "Choisissez un créneau horaire." });
       if (v.enfants + v.adultes < 1) ctx.addIssue({ code: "custom", path: ["enfants"], message: "Indiquez le nombre d'invités (enfants et/ou adultes)." });
+      if (v.enfants > MAX_ENFANTS_SUR_PLACE) ctx.addIssue({ code: "custom", path: ["enfants"], message: `Sur place, ${MAX_ENFANTS_SUR_PLACE} enfants maximum par créneau.` });
+      if (v.adultes > MAX_ADULTES_SUR_PLACE) ctx.addIssue({ code: "custom", path: ["adultes"], message: `Sur place, ${MAX_ADULTES_SUR_PLACE} adulte maximum par créneau.` });
     }
     if (v.mode === "a_emporter") {
       const r = heureBoutique.safeParse(v.heure_retrait);

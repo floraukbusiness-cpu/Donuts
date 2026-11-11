@@ -100,16 +100,39 @@ test("formulaire vide : messages d'erreur et rien n'est envoyé", async ({ page 
 
 test("calendrier : dates à moins de 7 jours bloquées avec explication", async ({ page }) => {
   const f = await ouvrir(page, /Anniversaire/);
+  await page.getByLabel("À emporter").check(); // la date apparaît dès ce choix
   const date = f.locator('[name="date"]');
   await expect(date).toHaveAttribute("min", dansJours(7));
   await expect(f.getByText(/au moins 7 jours/).first()).toBeVisible();
+  await expect(f.getByText(/fermée le dimanche/).first()).toBeVisible();
   await coordonnees(page);
-  await page.getByLabel("À emporter").check();
   await f.locator('[name="heure_retrait"]').fill("15:00");
   await f.locator('[name="nb_donuts"]').fill("12");
   await page.getByLabel(/Boîte\(s\)/).check();
   await finir(page, dansJours(3));
   await expect(f.getByText(/choisissez une date à partir de J\+7/)).toBeVisible();
+  expect(await appels(page)).toHaveLength(0);
+});
+
+test("anniversaire sur place : date et créneau dès le choix, 4 enfants et 1 adulte maximum", async ({ page }) => {
+  const f = await ouvrir(page, /Anniversaire/);
+  await expect(f.locator('[name="date"]')).toHaveCount(0); // pas avant d'avoir choisi sur place / à emporter
+  await page.getByLabel("Sur place, à la boutique").check();
+  // la date est juste sous le choix, avant le créneau
+  const ordre = await f.locator('[name="mode"], [name="date"], [name="creneau"], [name="enfants"]').evaluateAll((els) => els.map((e) => e.getAttribute("name")));
+  expect(ordre.filter((n, i) => ordre.indexOf(n) === i)).toEqual(["mode", "date", "creneau", "enfants"]);
+  await expect(f.getByText("4 enfants et 1 adulte maximum par créneau")).toBeVisible();
+  await expect(f.locator('[name="enfants"]')).toHaveAttribute("max", "4");
+  await expect(f.locator('[name="adultes"]')).toHaveAttribute("max", "1");
+  await coordonnees(page);
+  await f.locator('[name="creneau"]').selectOption("14h – 16h");
+  await f.locator('[name="enfants"]').fill("5");
+  await f.locator('[name="adultes"]').fill("2");
+  await f.locator('[name="nb_donuts"]').fill("12");
+  await page.getByLabel(/Boîte\(s\)/).check();
+  await finir(page);
+  await expect(f.getByText("Sur place, 4 enfants maximum par créneau.")).toBeVisible();
+  await expect(f.getByText("Sur place, 1 adulte maximum par créneau.")).toBeVisible();
   expect(await appels(page)).toHaveLength(0);
 });
 
@@ -132,8 +155,8 @@ test("ANNIVERSAIRE sur place : envoi de bout en bout + UTM", async ({ page }) =>
   const f = page.locator("form");
   await page.getByLabel("Sur place, à la boutique").check();
   await f.locator('[name="creneau"]').selectOption("14h – 16h");
-  await f.locator('[name="enfants"]').fill("8");
-  await f.locator('[name="adultes"]').fill("3");
+  await f.locator('[name="enfants"]').fill("4");
+  await f.locator('[name="adultes"]').fill("1");
   await f.locator('[name="age"]').fill("7");
   await f.locator('[name="prenom_fete"]').fill("Léa");
   await f.locator('[name="nb_donuts"]').fill("12");
@@ -166,8 +189,8 @@ test("ANNIVERSAIRE sur place : envoi de bout en bout + UTM", async ({ page }) =>
     details: {
       mode: "sur_place",
       creneau: "14h – 16h",
-      enfants: 8,
-      adultes: 3,
+      enfants: 4,
+      adultes: 1,
       age: "7",
       prenom_fete: "Léa",
       nb_donuts: 12,

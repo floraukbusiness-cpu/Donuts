@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
-import { DECO, MINIMUM_DONUTS, PRESENTATIONS, PRIX, SOURCES } from "@/lib/catalogue";
+import { DECO, MAX_ADULTES_SUR_PLACE, MAX_ENFANTS_SUR_PLACE, MINIMUM_DONUTS, PRESENTATIONS, PRIX, SOURCES } from "@/lib/catalogue";
 import { dateMaximum, dateMinimum } from "@/lib/dates";
 import {
   CRENEAUX,
@@ -185,12 +185,27 @@ export function FormulaireDemande({ type, utm }: Props) {
             onValeur={(v) => setMode(v)}
             erreur={err("mode")}
           />
+          {mode !== "" && (
+            <Champ
+              name="date"
+              label="Date de l'anniversaire"
+              requis
+              type="date"
+              min={minDate || undefined}
+              max={maxDate || undefined}
+              aide="Nous avons besoin d'au moins 7 jours pour préparer votre commande : les dates plus proches ne peuvent pas être choisies. La boutique est fermée le dimanche."
+              erreur={err("date")}
+            />
+          )}
           {mode === "sur_place" && (
             <>
               <Liste name="creneau" label="Créneau horaire souhaité" requis options={CRENEAUX} erreur={err("creneau")} />
+              <p className="rounded-xl bg-poudre p-3 font-bold text-violet">
+                Sur place : {MAX_ENFANTS_SUR_PLACE} enfants et {MAX_ADULTES_SUR_PLACE} adulte maximum par créneau.
+              </p>
               <div className="grid grid-cols-2 gap-4">
-                <Champ name="enfants" label="Invités enfants" type="number" inputMode="numeric" min={0} max={200} erreur={err("enfants")} />
-                <Champ name="adultes" label="Invités adultes" type="number" inputMode="numeric" min={0} max={200} erreur={err("adultes")} />
+                <Champ name="enfants" label="Invités enfants" type="number" inputMode="numeric" min={0} max={MAX_ENFANTS_SUR_PLACE} aide={`${MAX_ENFANTS_SUR_PLACE} maximum`} erreur={err("enfants")} />
+                <Champ name="adultes" label="Invités adultes" type="number" inputMode="numeric" min={0} max={MAX_ADULTES_SUR_PLACE} aide={`${MAX_ADULTES_SUR_PLACE} maximum`} erreur={err("adultes")} />
               </div>
             </>
           )}
@@ -255,6 +270,7 @@ export function FormulaireDemande({ type, utm }: Props) {
       )}
 
       {/* ── Date + retrait ───────────────────────────── */}
+      {type !== "anniversaire" && (
       <Groupe titre={type === "personnalisee" ? "Retrait en boutique" : "Date"}>
         <Champ
           name="date"
@@ -270,6 +286,7 @@ export function FormulaireDemande({ type, utm }: Props) {
           <Champ name="heure_retrait" label="Heure de retrait" requis type="time" min="10:00" max="19:45" step={900} aide="Entre 10h et 20h." erreur={err("heure_retrait")} />
         )}
       </Groupe>
+      )}
 
       {/* ── Fin commune ──────────────────────────────── */}
       <Groupe titre="Pour finir">

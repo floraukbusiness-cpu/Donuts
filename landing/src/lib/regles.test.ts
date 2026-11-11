@@ -53,6 +53,15 @@ describe("validation", () => {
     expect(r.ok).toBe(false);
     if (!r.ok) expect(Object.keys(r.erreurs)).toEqual(expect.arrayContaining(["creneau", "enfants"]));
   });
+  it("sur place : 4 enfants et 1 adulte maximum par créneau", () => {
+    const sp = { ...base, type: "anniversaire", mode: "sur_place", creneau: "14h – 16h", nb_donuts: "12", presentation: "boite" };
+    expect(valider("anniversaire", { ...sp, enfants: "4", adultes: "1" }).ok).toBe(true);
+    const r = valider("anniversaire", { ...sp, enfants: "5", adultes: "2" });
+    expect(r.ok).toBe(false);
+    if (!r.ok) expect(Object.keys(r.erreurs)).toEqual(expect.arrayContaining(["enfants", "adultes"]));
+    // à emporter : pas de limite d'invités
+    expect(valider("anniversaire", { ...base, type: "anniversaire", mode: "a_emporter", heure_retrait: "12:00", nb_donuts: "12", presentation: "boite", enfants: "9" }).ok).toBe(true);
+  });
   it("parfum inventé refusé", () => {
     const r = valider("anniversaire", { ...base, type: "anniversaire", mode: "a_emporter", heure_retrait: "12:00", nb_donuts: "6", presentation: "boite", parfums: ["Fourrés : Saumon"] });
     expect(r.ok).toBe(false);

@@ -10,6 +10,10 @@ export const PRIX = {
 } as const;
 
 export const MINIMUM_DONUTS = 6;
+
+// Anniversaire sur place : capacité maximale par créneau
+export const MAX_ENFANTS_SUR_PLACE = 4;
+export const MAX_ADULTES_SUR_PLACE = 1;
 export const OFFRE_DOUZE = "12 donuts commandés = 1 donut offert";
 
 export const PRESENTATIONS = [
