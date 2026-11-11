@@ -82,7 +82,7 @@ export default function Page() {
         <section id="demande" aria-labelledby="titre-demande" className="scroll-mt-2 bg-poudre px-4 py-12 md:py-16">
           <div className="mx-auto max-w-5xl">
             <h2 id="titre-demande" className="text-center text-3xl font-bold text-violet md:text-4xl">
-              Quelle est votre demande ?
+              Quelle est votre demande ?
             </h2>
             <p className="mb-8 mt-2 text-center">Choisissez votre type de demande pour ouvrir le formulaire.</p>
             <Demandes />
@@ -93,7 +93,7 @@ export default function Page() {
         <section aria-labelledby="titre-etapes" className="px-4 py-12 md:py-16">
           <div className="mx-auto max-w-5xl">
             <h2 id="titre-etapes" className="text-center text-3xl font-bold text-violet md:text-4xl">
-              Comment ça marche ?
+              Comment ça marche ?
             </h2>
             <ol className="mt-8 grid gap-4 md:grid-cols-3">
               {ETAPES.map((e) => (

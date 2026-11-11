@@ -1,21 +1,34 @@
 "use client";
+import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 import { UTM_KEYS, type TypeDemande } from "@/lib/schema";
 import { FormulaireDemande } from "./FormulaireDemande";
 
-const CARTES: { type: TypeDemande; emoji: string; titre: string; texte: string }[] = [
-  { type: "anniversaire", emoji: "🎂", titre: "Anniversaire", texte: "Sur place à la boutique ou à emporter." },
+// Photo de chaque carte : fichier dans public/images (voir README > Photos).
+const CARTES: { type: TypeDemande; emoji: string; titre: string; texte: string; photo: string; cadrage: string }[] = [
+  {
+    type: "anniversaire",
+    emoji: "🎂",
+    titre: "Anniversaire",
+    texte: "Sur place à la boutique ou à emporter.",
+    photo: "/images/carte-anniversaire.webp",
+    cadrage: "object-[center_55%]",
+  },
   {
     type: "personnalisee",
     emoji: "🎉",
     titre: "Commande personnalisée",
     texte: "Soirée, événement, baptême, mariage, EVJF… À emporter uniquement.",
+    photo: "/images/donut-p25.webp", // provisoire : remplacer par carte-personnalisee.webp
+    cadrage: "object-contain bg-poudre",
   },
   {
     type: "pro",
     emoji: "💼",
     titre: "Vous êtes un professionnel",
     texte: "Traiteur, wedding planner, concept store, entreprise…",
+    photo: "/images/salle-p28.webp", // provisoire : remplacer par carte-pro.webp
+    cadrage: "object-center",
   },
 ];
 
@@ -73,15 +86,23 @@ export function Demandes() {
                 onClick={() => ouvrir(c.type)}
                 aria-expanded={estActif}
                 aria-controls="formulaire-demande"
-                className={`flex h-full w-full items-center gap-4 rounded-3xl border-[3px] bg-white p-5 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md md:flex-col md:items-start md:p-6 ${
+                className={`flex h-full w-full flex-col overflow-hidden rounded-3xl border-[3px] bg-white text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md ${
                   estActif ? "border-magenta ring-4 ring-magenta/20" : "border-transparent"
                 }`}
               >
-                <span className="text-4xl md:text-5xl" aria-hidden="true">
-                  {c.emoji}
-                </span>
-                <span>
-                  <span className="block font-titre text-xl font-semibold text-violet">{c.titre}</span>
+                <Image
+                  src={c.photo}
+                  alt=""
+                  width={800}
+                  height={600}
+                  sizes="(min-width: 768px) 33vw, 100vw"
+                  className={`aspect-[16/10] w-full object-cover md:aspect-[4/3] ${c.cadrage}`}
+                />
+                <span className="block p-5 md:p-6">
+                  <span className="block font-titre text-xl font-semibold text-violet">
+                    <span aria-hidden="true">{c.emoji} </span>
+                    {c.titre}
+                  </span>
                   <span className="mt-1 block text-[0.98rem]">{c.texte}</span>
                   <span className="mt-2 inline-block font-bold text-magenta-fonce">
                     {estActif ? "Formulaire ouvert ↓" : "Faire ma demande →"}
