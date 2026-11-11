@@ -5,14 +5,19 @@ import { UTM_KEYS, type TypeDemande } from "@/lib/schema";
 import { FormulaireDemande } from "./FormulaireDemande";
 
 // Photo de chaque carte : fichier dans public/images (voir README > Photos).
-const CARTES: { type: TypeDemande; emoji: string; titre: string; texte: string; photo: string; cadrage: string }[] = [
+const CARTES: { type: TypeDemande; emoji: string; titre: string; texte: string; photo: string; cadrage: string; photoFormulaire?: { src: string; alt: string } }[] = [
   {
     type: "anniversaire",
     emoji: "🎂",
     titre: "Anniversaire",
     texte: "Sur place à la boutique ou à emporter.",
-    photo: "/images/carte-anniversaire.webp",
-    cadrage: "object-[center_55%]",
+    photo: "/images/anniversaire-super-heros.webp",
+    cadrage: "object-[center_78%]",
+    // Photo affichée au-dessus du formulaire quand la carte est ouverte
+    photoFormulaire: {
+      src: "/images/carte-anniversaire.webp",
+      alt: "Pièce montée de donuts fleurie pour un anniversaire, avec le chiffre 10 et le mot « Joyeux anniversaire »",
+    },
   },
   {
     type: "personnalisee",
@@ -121,6 +126,16 @@ export function Demandes() {
               <span aria-hidden="true">{carte.emoji} </span>
               {carte.titre}
             </h3>
+            {carte.photoFormulaire && (
+              <Image
+                src={carte.photoFormulaire.src}
+                alt={carte.photoFormulaire.alt}
+                width={900}
+                height={1200}
+                sizes="(min-width: 768px) 768px, 100vw"
+                className="mx-auto mb-4 h-64 w-full rounded-3xl object-cover object-[center_55%] shadow-sm sm:h-80 md:max-w-3xl"
+              />
+            )}
             {/* key : chaque type a son propre formulaire, remis à zéro quand on change */}
             <FormulaireDemande key={carte.type} type={carte.type} utm={utm} />
           </div>
