@@ -1,5 +1,5 @@
 // Mise en forme de l'e-mail de notification envoyé à la boutique.
-import { DECO, PRESENTATIONS } from "./catalogue";
+import { BALLON, BOUGIE, DECO, PRESENTATIONS } from "./catalogue";
 import { formatDateFr } from "./dates";
 import { LIBELLES_TYPE, type Demande } from "./schema";
 
@@ -20,6 +20,14 @@ function lignesCommande(d: { nb_donuts: number; nb_minis: number; presentation: 
     [DECO.label, d.deco === "on" ? `Oui (${DECO.detail})` : "Non"],
     ["Parfums", d.parfums.length ? d.parfums.join(", ") : "Non précisés"],
   ];
+}
+
+function lignesOptionsSurPlace(d: { apport?: string; bougie?: string; ballon?: string; enfants: number }): Ligne[] {
+  if (d.apport !== "boutique") return [["Bougies et déco", "Le client apporte ses bougies et sa déco"]];
+  const lignes: Ligne[] = [];
+  if (d.bougie) lignes.push([BOUGIE.label, `Oui (${BOUGIE.detail})`]);
+  if (d.ballon) lignes.push([BALLON.label, `Oui : ${d.enfants} enfant${d.enfants > 1 ? "s" : ""} × ${BALLON.prix} € = ${d.enfants * BALLON.prix} €`]);
+  return lignes;
 }
 
 export function lignesDemande(d: Demande): Ligne[] {
@@ -46,6 +54,7 @@ export function lignesDemande(d: Demande): Ligne[] {
             ["Créneau souhaité", d.creneau],
             ["Invités enfants", String(d.enfants)],
             ["Invités adultes", String(d.adultes)],
+            ...lignesOptionsSurPlace(d),
           ] as Ligne[])
         : ([["Heure de retrait", d.heure_retrait]] as Ligne[])),
       ["Âge fêté", d.age || "—"],

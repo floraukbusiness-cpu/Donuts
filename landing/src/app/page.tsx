@@ -2,7 +2,7 @@ import Image from "next/image";
 import { Demandes } from "@/components/Demandes";
 import { Galerie } from "@/components/Galerie";
 import { PiedDePage } from "@/components/PiedDePage";
-import { BOUTIQUE, CATEGORIES_PARFUMS, DECO, MINIMUM_DONUTS, OFFRE_DOUZE, PRESENTATIONS, PRIX } from "@/lib/catalogue";
+import { BALLON, BOUGIE, BOUTIQUE, CATEGORIES_PARFUMS, DECO, MINIMUM_DONUTS, OFFRE_DOUZE, PRESENTATIONS, PRIX } from "@/lib/catalogue";
 
 // Ordre : on alterne une illustration (IA) et une vraie photo de la boutique.
 const GALERIE = [
@@ -152,7 +152,7 @@ export default function Page() {
             <div className="mt-6 rounded-3xl bg-white p-6 shadow-sm">
               <h3 className="font-titre text-xl font-semibold text-violet">Présentations et options</h3>
               <ul className="mt-3 divide-y divide-poudre">
-                {[...PRESENTATIONS, DECO].map((p) => (
+                {[...PRESENTATIONS, DECO, { label: `${BOUGIE.label} (anniversaire sur place)`, detail: BOUGIE.detail }, { label: `${BALLON.label} (anniversaire sur place)`, detail: BALLON.detail }].map((p) => (
                   <li key={p.label} className="flex items-baseline justify-between gap-4 py-2">
                     <span>{p.label}</span>
                     <span className="shrink-0 font-bold">{p.detail}</span>

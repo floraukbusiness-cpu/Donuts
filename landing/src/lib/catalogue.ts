@@ -41,6 +41,10 @@ export const PRESENTATIONS = [
 
 export const DECO = { label: "Décoration (fleurs, etc.)", detail: "+5 €" } as const;
 
+// Options de l'anniversaire sur place (le client peut aussi apporter ses bougies et sa déco)
+export const BOUGIE = { label: "Bougie d'anniversaire", detail: "+2 €", prix: 2 } as const;
+export const BALLON = { label: "Ballon hélium", detail: "+3 € par enfant", prix: 3 } as const;
+
 export type CategorieParfums = {
   id: string;
   titre: string;

@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
-import { CRENEAUX_SUR_PLACE, DECO, JOURS_SUR_PLACE, MAX_ADULTES_SUR_PLACE, MAX_ENFANTS_SUR_PLACE, MINIMUM_DONUTS, PRESENTATIONS, PRIX, SOURCES } from "@/lib/catalogue";
+import { BALLON, BOUGIE, CRENEAUX_SUR_PLACE, DECO, JOURS_SUR_PLACE, MAX_ADULTES_SUR_PLACE, MAX_ENFANTS_SUR_PLACE, MINIMUM_DONUTS, PRESENTATIONS, PRIX, SOURCES } from "@/lib/catalogue";
 import { dateMaximum, dateMinimum, dateMinimumSurPlace } from "@/lib/dates";
 import {
   EVENEMENTS,
@@ -32,6 +32,9 @@ export function FormulaireDemande({ type, utm }: Props) {
   const [maxDate, setMaxDate] = useState("");
   const [minSurPlace, setMinSurPlace] = useState("");
   const [dateSurPlace, setDateSurPlace] = useState("");
+  const [enfants, setEnfants] = useState(0);
+  const [apport, setApport] = useState("");
+  const [ballon, setBallon] = useState(false);
 
   // Champs qui font apparaître d'autres champs
   const [mode, setMode] = useState("");
@@ -229,9 +232,59 @@ export function FormulaireDemande({ type, utm }: Props) {
                 Sur place : {MAX_ENFANTS_SUR_PLACE} enfants et {MAX_ADULTES_SUR_PLACE} adulte maximum par créneau.
               </p>
               <div className="grid grid-cols-2 gap-4">
-                <Champ name="enfants" label="Invités enfants" type="number" inputMode="numeric" min={0} max={MAX_ENFANTS_SUR_PLACE} aide={`${MAX_ENFANTS_SUR_PLACE} maximum`} erreur={err("enfants")} />
+                <Champ
+                  name="enfants"
+                  label="Invités enfants"
+                  type="number"
+                  inputMode="numeric"
+                  min={0}
+                  max={MAX_ENFANTS_SUR_PLACE}
+                  aide={`${MAX_ENFANTS_SUR_PLACE} maximum`}
+                  erreur={err("enfants")}
+                  onChange={(e) => setEnfants(Math.max(0, Math.min(MAX_ENFANTS_SUR_PLACE, Number(e.target.value) || 0)))}
+                />
                 <Champ name="adultes" label="Invités adultes" type="number" inputMode="numeric" min={0} max={MAX_ADULTES_SUR_PLACE} aide={`${MAX_ADULTES_SUR_PLACE} maximum`} erreur={err("adultes")} />
               </div>
+
+              <Choix
+                name="apport"
+                label="Bougies et décoration"
+                requis
+                options={[
+                  { value: "apporte", label: "Je ramène mes bougies et ma déco" },
+                  { value: "boutique", label: "Je prends les options de la boutique" },
+                ]}
+                onValeur={(v) => setApport(v)}
+                erreur={err("apport")}
+              />
+              {apport === "boutique" && (
+                <div className="space-y-2 rounded-2xl bg-poudre p-4">
+                  <p className="font-bold text-violet">Options de la boutique</p>
+                  <label className="puce">
+                    <input type="checkbox" name="bougie" />
+                    <span>
+                      {BOUGIE.label} · {BOUGIE.detail}
+                    </span>
+                  </label>
+                  <label className="puce">
+                    <input type="checkbox" name="ballon" onChange={(e) => setBallon(e.target.checked)} />
+                    <span>
+                      {BALLON.label} · {BALLON.detail}
+                    </span>
+                  </label>
+                  {ballon && (
+                    <p className="aide" aria-live="polite">
+                      {enfants > 0 ? (
+                        <>
+                          Ballons hélium : {enfants} enfant{enfants > 1 ? "s" : ""} × {BALLON.prix} € = <strong>{enfants * BALLON.prix} €</strong>
+                        </>
+                      ) : (
+                        "Indiquez le nombre d'enfants ci-dessus pour voir le prix des ballons."
+                      )}
+                    </p>
+                  )}
+                </div>
+              )}
             </>
           )}
           {mode === "a_emporter" && (

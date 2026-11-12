@@ -73,7 +73,7 @@ describe("validation", () => {
     if (!r.ok) expect(Object.keys(r.erreurs)).toEqual(expect.arrayContaining(["creneau", "enfants"]));
   });
   it("sur place : mercredi ou samedi, au moins 5 jours à l'avance", () => {
-    const sp = { ...base, type: "anniversaire", mode: "sur_place", creneau: "14h00 – 15h00", enfants: "2", adultes: "1", nb_donuts: "12", presentation: "boite" };
+    const sp = { ...base, type: "anniversaire", mode: "sur_place", creneau: "14h00 – 15h00", apport: "apporte", enfants: "2", adultes: "1", nb_donuts: "12", presentation: "boite" };
     expect(valider("anniversaire", { ...sp, date: dateSurPlace() }).ok).toBe(true);
     let mardi = ajouterJours(aujourdhuiParis(), 8);
     while (jourSemaine(mardi) !== 2) mardi = ajouterJours(mardi, 1);
@@ -84,8 +84,20 @@ describe("validation", () => {
     expect(trop.ok).toBe(false);
     expect(valider("anniversaire", { ...sp, date: dateSurPlace(), creneau: "10h00 – 11h00" }).ok).toBe(false);
   });
+  it("sur place : bougies et déco — apportées, ou options de la boutique (bougie 2 €, ballon 3 € par enfant)", () => {
+    const sp = { ...base, date: dateSurPlace(), type: "anniversaire", mode: "sur_place", creneau: "14h00 – 15h00", enfants: "2", adultes: "1", nb_donuts: "12", presentation: "boite" };
+    expect(valider("anniversaire", sp).ok).toBe(false); // choix obligatoire
+    expect(valider("anniversaire", { ...sp, apport: "apporte" }).ok).toBe(true);
+    expect(valider("anniversaire", { ...sp, apport: "boutique" }).ok).toBe(false); // aucune option cochée
+    expect(valider("anniversaire", { ...sp, apport: "boutique", bougie: "on" }).ok).toBe(true);
+    expect(valider("anniversaire", { ...sp, apport: "boutique", ballon: "on" }).ok).toBe(true);
+    const sansEnfant = valider("anniversaire", { ...sp, enfants: "0", adultes: "1", apport: "boutique", ballon: "on" });
+    expect(sansEnfant.ok).toBe(false); // le ballon est par enfant
+    // à emporter : aucune de ces questions
+    expect(valider("anniversaire", { ...base, type: "anniversaire", mode: "a_emporter", heure_retrait: "12:00", nb_donuts: "12", presentation: "boite" }).ok).toBe(true);
+  });
   it("sur place : 4 enfants et 1 adulte maximum par créneau", () => {
-    const sp = { ...base, date: dateSurPlace(), type: "anniversaire", mode: "sur_place", creneau: "14h00 – 15h00", nb_donuts: "12", presentation: "boite" };
+    const sp = { ...base, date: dateSurPlace(), type: "anniversaire", mode: "sur_place", creneau: "14h00 – 15h00", apport: "apporte", nb_donuts: "12", presentation: "boite" };
     expect(valider("anniversaire", { ...sp, enfants: "4", adultes: "1" }).ok).toBe(true);
     const r = valider("anniversaire", { ...sp, enfants: "5", adultes: "2" });
     expect(r.ok).toBe(false);
