@@ -22,12 +22,15 @@ function lignesCommande(d: { nb_donuts: number; nb_minis: number; presentation: 
   ];
 }
 
-function lignesOptionsSurPlace(d: { apport?: string; bougie?: string; ballon?: string; enfants: number }): Ligne[] {
+function lignesOptionsSurPlace(d: { apport?: string; enfants: number }): Ligne[] {
   if (d.apport !== "boutique") return [["Bougies et déco", "Le client apporte ses bougies et sa déco"]];
-  const lignes: Ligne[] = [];
-  if (d.bougie) lignes.push([BOUGIE.label, `Oui (${BOUGIE.detail})`]);
-  if (d.ballon) lignes.push([BALLON.label, `Oui : ${d.enfants} enfant${d.enfants > 1 ? "s" : ""} × ${BALLON.prix} € = ${d.enfants * BALLON.prix} €`]);
-  return lignes;
+  const ballons = d.enfants * BALLON.prix;
+  return [
+    ["Bougies et déco", "Donuts & Donuts s'occupe de tout"],
+    [BOUGIE.label, `1 (${BOUGIE.detail})`],
+    [BALLON.label, d.enfants > 0 ? `${d.enfants} enfant${d.enfants > 1 ? "s" : ""} × ${BALLON.prix} € = ${ballons} €` : "Aucun enfant indiqué"],
+    ["Total options (bougie + ballons)", `${BOUGIE.prix + ballons} €`],
+  ];
 }
 
 export function lignesDemande(d: Demande): Ligne[] {

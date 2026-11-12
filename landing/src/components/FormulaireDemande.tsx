@@ -34,7 +34,6 @@ export function FormulaireDemande({ type, utm }: Props) {
   const [dateSurPlace, setDateSurPlace] = useState("");
   const [enfants, setEnfants] = useState(0);
   const [apport, setApport] = useState("");
-  const [ballon, setBallon] = useState(false);
 
   // Champs qui font apparaître d'autres champs
   const [mode, setMode] = useState("");
@@ -252,38 +251,32 @@ export function FormulaireDemande({ type, utm }: Props) {
                 requis
                 options={[
                   { value: "apporte", label: "Je ramène mes bougies et ma déco" },
-                  { value: "boutique", label: "Je prends les options de la boutique" },
+                  {
+                    value: "boutique",
+                    label: (
+                      <span>
+                        Donuts &amp; Donuts s&apos;occupe de tout
+                        <em className="block text-sm font-normal italic">
+                          (bougie {BOUGIE.prix}&nbsp;€ + 1&nbsp;ballon par enfant, {BALLON.prix}&nbsp;€/enfant)
+                        </em>
+                      </span>
+                    ),
+                  },
                 ]}
                 onValeur={(v) => setApport(v)}
                 erreur={err("apport")}
               />
               {apport === "boutique" && (
-                <div className="space-y-2 rounded-2xl bg-poudre p-4">
-                  <p className="font-bold text-violet">Options de la boutique</p>
-                  <label className="puce">
-                    <input type="checkbox" name="bougie" />
-                    <span>
-                      {BOUGIE.label} · {BOUGIE.detail}
-                    </span>
-                  </label>
-                  <label className="puce">
-                    <input type="checkbox" name="ballon" onChange={(e) => setBallon(e.target.checked)} />
-                    <span>
-                      {BALLON.label} · {BALLON.detail}
-                    </span>
-                  </label>
-                  {ballon && (
-                    <p className="aide" aria-live="polite">
-                      {enfants > 0 ? (
-                        <>
-                          Ballons hélium : {enfants} enfant{enfants > 1 ? "s" : ""} × {BALLON.prix} € = <strong>{enfants * BALLON.prix} €</strong>
-                        </>
-                      ) : (
-                        "Indiquez le nombre d'enfants ci-dessus pour voir le prix des ballons."
-                      )}
-                    </p>
+                <p className="rounded-xl bg-poudre p-3 text-violet" aria-live="polite">
+                  {enfants > 0 ? (
+                    <>
+                      Bougie : {BOUGIE.prix} € · Ballons hélium : {enfants} enfant{enfants > 1 ? "s" : ""} × {BALLON.prix} € = {enfants * BALLON.prix} € ·{" "}
+                      <strong>Total : {BOUGIE.prix + enfants * BALLON.prix} €</strong>
+                    </>
+                  ) : (
+                    <>Bougie : {BOUGIE.prix} €. Indiquez le nombre d&apos;enfants ci-dessus pour voir le prix des ballons.</>
                   )}
-                </div>
+                </p>
               )}
             </>
           )}

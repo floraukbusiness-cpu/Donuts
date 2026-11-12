@@ -1,7 +1,7 @@
 // Règles de validation des 3 formulaires, partagées entre le navigateur
 // (messages d'erreur immédiats) et le serveur (contrôle final, non contournable).
 import { z } from "zod";
-import { BALLON, CRENEAUX_SUR_PLACE, JOURS_SUR_PLACE, MAX_ADULTES_SUR_PLACE, MAX_ENFANTS_SUR_PLACE, MINIMUM_DONUTS, PARFUMS_A_DEFINIR, PRESENTATIONS, SOURCES, TOUS_LES_PARFUMS } from "./catalogue";
+import { CRENEAUX_SUR_PLACE, JOURS_SUR_PLACE, MAX_ADULTES_SUR_PLACE, MAX_ENFANTS_SUR_PLACE, MINIMUM_DONUTS, PARFUMS_A_DEFINIR, PRESENTATIONS, SOURCES, TOUS_LES_PARFUMS } from "./catalogue";
 import { dateMaximum, dateMinimum, dateMinimumSurPlace, estDimanche, jourSemaine } from "./dates";
 
 export const TYPES = ["anniversaire", "personnalisee", "pro"] as const;
@@ -106,19 +106,16 @@ export const anniversaireSchema = z
       .default("")
       .refine((v) => v === "" || (/^\d{1,3}$/.test(v) && Number(v) <= 120), "Indiquez un âge valide."),
     prenom_fete: optionnel(60),
-    // Anniversaire sur place : le client apporte ses bougies et sa déco, ou prend les options de la boutique
+    // Anniversaire sur place : le client apporte ses bougies et sa déco, ou Donuts & Donuts s'occupe de tout
+    // (bougie + 1 ballon hélium par enfant)
     apport: z.enum(["apporte", "boutique"]).optional(),
-    bougie: z.literal("on").optional(),
-    ballon: z.literal("on").optional(),
     ...commande(),
     theme: optionnel(500),
   })
   .superRefine((v, ctx) => {
     verifierCommande(v, ctx);
     if (v.mode === "sur_place") {
-      if (!v.apport) ctx.addIssue({ code: "custom", path: ["apport"], message: "Indiquez si vous apportez vos bougies et votre déco, ou si vous prenez les options de la boutique." });
-      else if (v.apport === "boutique" && !v.bougie && !v.ballon) ctx.addIssue({ code: "custom", path: ["apport"], message: "Cochez une option (bougie ou ballon), ou choisissez « Je ramène mes bougies et ma déco »." });
-      if (v.apport === "boutique" && v.ballon && v.enfants < 1) ctx.addIssue({ code: "custom", path: ["enfants"], message: `Le ballon hélium est à ${BALLON.prix} € par enfant : indiquez le nombre d'enfants.` });
+      if (!v.apport) ctx.addIssue({ code: "custom", path: ["apport"], message: "Indiquez si vous apportez vos bougies et votre déco, ou si Donuts & Donuts s'occupe de tout." });
       if (v.date < dateMinimumSurPlace()) ctx.addIssue({ code: "custom", path: ["date"], message: "Pour un anniversaire sur place, réservez au moins 5 jours à l'avance." });
       else if (v.date > dateMaximum()) ctx.addIssue({ code: "custom", path: ["date"], message: "Choisissez une date dans les 12 prochains mois." });
       else if (!JOURS_SUR_PLACE.includes(jourSemaine(v.date))) ctx.addIssue({ code: "custom", path: ["date"], message: "Sur place, les anniversaires ont lieu le mercredi et le samedi." });

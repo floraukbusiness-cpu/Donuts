@@ -172,39 +172,37 @@ test("anniversaire sur place : calendrier mercredi/samedi dès J+5, créneaux d'
   await finir(page, null);
   await expect(f.getByText("Sur place, 4 enfants maximum par créneau.")).toBeVisible();
   await expect(f.getByText("Sur place, 1 adulte maximum par créneau.")).toBeVisible();
-  await expect(f.getByText(/Indiquez si vous apportez vos bougies et votre déco/)).toBeVisible();
+  await expect(f.getByText(/Indiquez si vous apportez vos bougies et votre déco, ou si Donuts & Donuts s'occupe de tout/)).toBeVisible();
   expect(await appels(page)).toHaveLength(0);
 });
 
-test("bougie et ballon hélium : proposés seulement sur place, choix obligatoire", async ({ page }) => {
+test("bougies et déco : question seulement sur place ; « Donuts & Donuts s'occupe de tout » = bougie + 1 ballon par enfant", async ({ page }) => {
   const f = await ouvrir(page, /Anniversaire/);
   await page.getByLabel("À emporter").check();
   await expect(f.getByText("Bougies et décoration")).toHaveCount(0);
   await page.getByLabel("Sur place, à la boutique").check();
   await expect(f.getByText("Bougies et décoration")).toBeVisible();
   await expect(f.getByLabel("Je ramène mes bougies et ma déco")).toBeVisible();
-  await expect(f.getByLabel(/Bougie d'anniversaire/)).toHaveCount(0); // visibles seulement si « options de la boutique »
-  await f.getByLabel("Je prends les options de la boutique").check();
-  await expect(f.getByLabel(/Bougie d'anniversaire · \+2 €/)).toBeVisible();
-  await expect(f.getByLabel(/Ballon hélium · \+3 € par enfant/)).toBeVisible();
-  // ballon coché, aucun enfant indiqué : on explique pourquoi on ne peut pas calculer
-  await f.getByLabel(/Ballon hélium/).check();
+  const toutFaire = f.getByLabel(/Donuts & Donuts s'occupe de tout/);
+  await expect(toutFaire).toBeVisible();
+  await expect(f.getByText(/bougie 2\s€ \+ 1\sballon par enfant, 3\s€\/enfant/)).toBeVisible();
+  // en italique et plus petit que le libellé principal
+  const style = await f.getByText(/bougie 2\s€ \+ 1\sballon par enfant/).evaluate((el) => {
+    const s = getComputedStyle(el);
+    return { italic: s.fontStyle, taille: parseFloat(s.fontSize), parent: parseFloat(getComputedStyle(el.parentElement!).fontSize) };
+  });
+  expect(style.italic).toBe("italic");
+  expect(style.taille).toBeLessThan(style.parent);
+  // aucune case séparée pour la bougie ou le ballon
+  await expect(f.getByLabel(/Bougie d'anniversaire/)).toHaveCount(0);
+  await expect(f.getByLabel(/Ballon hélium/)).toHaveCount(0);
+
+  await toutFaire.check();
   await expect(f.getByText(/Indiquez le nombre d'enfants ci-dessus/)).toBeVisible();
   await f.locator('[name="enfants"]').fill("2");
-  await expect(f.getByText(/2 enfants × 3 € = 6 €/)).toBeVisible();
-  // « options de la boutique » sans rien cocher : refusé
-  await f.getByLabel(/Ballon hélium/).uncheck();
-  // on complète le reste du formulaire pour que seule cette règle bloque l'envoi
-  await coordonnees(page);
-  await choisirJourSurPlace(page);
-  await f.getByLabel("14h00 – 15h00").check();
-  await f.locator('[name="nb_donuts"]').fill("12");
-  await page.getByLabel(/Boîte\(s\)/).check();
-  await finir(page, null);
-  await expect(f.getByText(/Cochez une option \(bougie ou ballon\)/)).toBeVisible();
-  // « je ramène » : les options de la boutique disparaissent
+  await expect(f.getByText("Total : 8 €")).toBeVisible(); // bougie 2 € + 2 ballons × 3 €
   await f.getByLabel("Je ramène mes bougies et ma déco").check();
-  await expect(f.getByLabel(/Bougie d'anniversaire/)).toHaveCount(0);
+  await expect(f.getByText(/Total :/)).toHaveCount(0);
   expect(await appels(page)).toHaveLength(0);
 });
 
@@ -241,10 +239,9 @@ test("ANNIVERSAIRE sur place : envoi de bout en bout + UTM", async ({ page }) =>
   await f.getByLabel("14h00 – 15h00").check();
   await f.locator('[name="enfants"]').fill("4");
   await f.locator('[name="adultes"]').fill("1");
-  await f.getByLabel("Je prends les options de la boutique").check();
-  await f.getByLabel(/Bougie d'anniversaire/).check();
-  await f.getByLabel(/Ballon hélium/).check();
+  await f.getByLabel(/Donuts & Donuts s'occupe de tout/).check();
   await expect(f.getByText(/4 enfants × 3 € = 12 €/)).toBeVisible();
+  await expect(f.getByText("Total : 14 €")).toBeVisible(); // bougie 2 € + 4 ballons × 3 €
   await f.locator('[name="age"]').fill("7");
   await f.locator('[name="prenom_fete"]').fill("Léa");
   await f.locator('[name="nb_donuts"]').fill("12");
@@ -280,8 +277,6 @@ test("ANNIVERSAIRE sur place : envoi de bout en bout + UTM", async ({ page }) =>
       enfants: 4,
       adultes: 1,
       apport: "boutique",
-      bougie: "on",
-      ballon: "on",
       age: "7",
       prenom_fete: "Léa",
       nb_donuts: 12,
@@ -296,7 +291,7 @@ test("ANNIVERSAIRE sur place : envoi de bout en bout + UTM", async ({ page }) =>
   expect(String(mail.json!.subject)).toMatch(/^\[ANNIVERSAIRE\] Camille Martin – /);
   expect(mail.json!.to).toEqual(["donutsdonuts.lyonpartdieu@gmail.com"]);
   expect(mail.json!.reply_to).toBe("camille@example.com");
-  for (const t of ["Sur place", "14h00 – 15h00", "Léa", "Bougie d'anniversaire", "4 enfants × 3 € = 12 €", "Pièce montée", "Chocolatés : Nutella", "Licorne, rose et doré", "utm_source=instagram"]) {
+  for (const t of ["Sur place", "14h00 – 15h00", "Léa", "s'occupe de tout", "Bougie d'anniversaire", "4 enfants × 3 € = 12 €", "Total options (bougie + ballons) : 14 €", "Pièce montée", "Chocolatés : Nutella", "Licorne, rose et doré", "utm_source=instagram"]) {
     expect(String(mail.json!.text)).toContain(t);
   }
   const uploads = c.filter((x) => x.method === "POST" && x.path.startsWith("/storage/v1/object/inspirations/"));
