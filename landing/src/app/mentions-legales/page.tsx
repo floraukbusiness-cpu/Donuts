@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { PiedDePage } from "@/components/PiedDePage";
-import { BOUTIQUE } from "@/lib/catalogue";
+import { BOUTIQUES } from "@/lib/catalogue";
 
 export const metadata: Metadata = {
   title: "Mentions légales | Donuts & Donuts Lyon Part-Dieu",
@@ -9,14 +9,17 @@ export const metadata: Metadata = {
   alternates: { canonical: "/mentions-legales" },
 };
 
-// Source : registre officiel des entreprises (SIRET 991 118 936 00020).
+// Source : registre officiel des entreprises (SIREN 991 118 936 : 3 établissements, Bordeaux, Lyon et Strasbourg).
 // À vérifier par la société : directeur de la publication et n° de TVA (calculé à partir du SIREN).
 const EDITEUR = {
   raisonSociale: "JUST D'OH IT",
   forme: "SAS, société par actions simplifiée, au capital de 100 000 €",
   siege: "Centre commercial Mériadeck, 57 rue du Château d'Eau, 33000 Bordeaux",
   siren: "SIREN 991 118 936 – RCS Bordeaux",
-  etablissement: "Établissement de Lyon : SIRET 991 118 936 00020, 17 rue du Docteur Bouchut, 69003 Lyon",
+  etablissements: [
+    "Établissement de Lyon Part-Dieu : SIRET 991 118 936 00020, 17 rue du Docteur Bouchut, 69003 Lyon",
+    "Établissement de Strasbourg : SIRET 991 118 936 00038, 24 place des Halles, 67000 Strasbourg",
+  ],
   tva: "FR09 991118936",
   directeur: "Cédric Roptin, Président",
 };
@@ -38,18 +41,23 @@ export default function MentionsLegales() {
 
         <Titre>Éditeur du site</Titre>
         <p className="mt-3">
-          Ce site de demandes de commandes est édité pour la boutique {BOUTIQUE.nom} ({BOUTIQUE.lieu}, {BOUTIQUE.rue}, {BOUTIQUE.codePostal} {BOUTIQUE.ville}) par :
+          Ce site de demandes de commandes est édité pour les boutiques {BOUTIQUES.lyon.complet} et {BOUTIQUES.strasbourg.complet} par :
         </p>
         <ul className="mt-3 list-disc space-y-1 pl-6">
           <li>{EDITEUR.raisonSociale}</li>
           <li>{EDITEUR.forme}</li>
           <li>Siège social : {EDITEUR.siege}</li>
           <li>{EDITEUR.siren}</li>
-          <li>{EDITEUR.etablissement}</li>
+          {EDITEUR.etablissements.map((e) => (
+            <li key={e}>{e}</li>
+          ))}
           <li>TVA : {EDITEUR.tva}</li>
           <li>Directeur de la publication : {EDITEUR.directeur}</li>
           <li>
-            Contact : <a href={`mailto:${BOUTIQUE.email}`} className="underline">{BOUTIQUE.email}</a>
+            Contact Lyon : <a href={`mailto:${BOUTIQUES.lyon.email}`} className="underline">{BOUTIQUES.lyon.email}</a>
+          </li>
+          <li>
+            Contact Strasbourg : <a href={`mailto:${BOUTIQUES.strasbourg.email}`} className="underline">{BOUTIQUES.strasbourg.email}</a>
           </li>
         </ul>
         <p className="mt-3">
@@ -86,7 +94,7 @@ export default function MentionsLegales() {
           </p>
           <p>
             <strong>Vos droits :</strong> vous pouvez accéder à vos données, les rectifier, les effacer, vous opposer à leur traitement ou
-            retirer votre consentement en écrivant à <a href={`mailto:${BOUTIQUE.email}`} className="underline">{BOUTIQUE.email}</a>. Vous
+            retirer votre consentement en écrivant à la boutique concernée : <a href={`mailto:${BOUTIQUES.lyon.email}`} className="underline">{BOUTIQUES.lyon.email}</a> (Lyon) ou <a href={`mailto:${BOUTIQUES.strasbourg.email}`} className="underline">{BOUTIQUES.strasbourg.email}</a> (Strasbourg). Vous
             pouvez aussi adresser une réclamation à la CNIL (cnil.fr).
           </p>
           <p>

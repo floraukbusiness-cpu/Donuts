@@ -165,7 +165,7 @@ export const BOUTIQUES: Record<BoutiqueId, Boutique> = {
     ville: "Strasbourg",
     horaires: "", // à compléter
     instagram: "", // à compléter
-    email: "", // à compléter
+    email: "donutsdonuts.strasbourg@gmail.com",
     surPlace: false, // à Strasbourg : à emporter uniquement
   },
 };
