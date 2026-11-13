@@ -160,7 +160,7 @@ export const BOUTIQUES: Record<BoutiqueId, Boutique> = {
     nom: "Strasbourg",
     complet: "Donuts & Donuts Strasbourg",
     lieu: "Centre commercial Place des Halles",
-    rue: "", // à compléter
+    rue: "24 place des Halles",
     codePostal: "67000",
     ville: "Strasbourg",
     horaires: "", // à compléter
