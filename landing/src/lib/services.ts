@@ -62,7 +62,29 @@ export async function stockerImage(file: File): Promise<{ path: string; url: str
   return { path, url: `${supabaseUrl()}/storage/v1${signedURL}` };
 }
 
-export async function envoyerEmail(opts: { subject: string; html: string; text: string; replyTo: string }): Promise<void> {
+/** Adresse qui reçoit les demandes d'une boutique (NOTIFY_EMAIL_STRASBOURG, sinon NOTIFY_EMAIL). */
+export function destinataire(boutique: string): string {
+  const specifique = boutique === "strasbourg" ? process.env.NOTIFY_EMAIL_STRASBOURG : undefined;
+  return specifique || env("NOTIFY_EMAIL");
+}
+
+/**
+ * Envoie la notification. Si l'adresse propre à la boutique est refusée (ex. Resend sans nom de
+ * domaine vérifié n'envoie qu'à l'adresse du compte), on se rabat sur NOTIFY_EMAIL : rien n'est perdu.
+ */
+export async function envoyerNotification(boutique: string, opts: { subject: string; html: string; text: string; replyTo: string }): Promise<void> {
+  const principal = env("NOTIFY_EMAIL");
+  const cible = destinataire(boutique);
+  try {
+    await envoyerEmail({ ...opts, to: cible });
+  } catch (e) {
+    if (cible === principal) throw e;
+    console.error("[demande] adresse de la boutique refusée, repli sur NOTIFY_EMAIL", e);
+    await envoyerEmail({ ...opts, to: principal, subject: `${opts.subject} (à transmettre à ${cible})` });
+  }
+}
+
+export async function envoyerEmail(opts: { subject: string; html: string; text: string; replyTo: string; to?: string }): Promise<void> {
   const res = await fetch(`${process.env.RESEND_API_URL || "https://api.resend.com"}/emails`, {
     method: "POST",
     headers: { Authorization: `Bearer ${env("RESEND_API_KEY")}`, "Content-Type": "application/json" },
@@ -70,7 +92,7 @@ export async function envoyerEmail(opts: { subject: string; html: string; text: 
       // Sans nom de domaine vérifié, Resend impose cette adresse d'expédition
       // et n'envoie qu'à l'adresse du titulaire du compte Resend.
       from: process.env.EMAIL_FROM || "Demandes Donuts Lyon <onboarding@resend.dev>",
-      to: [env("NOTIFY_EMAIL")],
+      to: [opts.to ?? env("NOTIFY_EMAIL")],
       reply_to: opts.replyTo,
       subject: opts.subject,
       html: opts.html,

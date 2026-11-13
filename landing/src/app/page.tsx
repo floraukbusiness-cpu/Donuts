@@ -2,7 +2,7 @@ import Image from "next/image";
 import { Demandes } from "@/components/Demandes";
 import { Galerie } from "@/components/Galerie";
 import { PiedDePage } from "@/components/PiedDePage";
-import { BALLON, BOUGIE, BOUTIQUE, CATEGORIES_PARFUMS, DECO, MINIMUM_DONUTS, OFFRE_DOUZE, PRESENTATIONS, PRIX } from "@/lib/catalogue";
+import { adresse, BALLON, BOUGIE, BOUTIQUES, CATEGORIES_PARFUMS, DECO, MINIMUM_DONUTS, OFFRE_DOUZE, PRESENTATIONS, PRIX } from "@/lib/catalogue";
 
 // Ordre : on alterne une illustration (IA) et une vraie photo de la boutique.
 const GALERIE = [
@@ -30,7 +30,7 @@ const FAQ = [
   },
   {
     q: "Où récupérer ma commande ?",
-    r: `Les commandes se retirent à la boutique : ${BOUTIQUE.lieu}, ${BOUTIQUE.rue}, ${BOUTIQUE.codePostal} ${BOUTIQUE.ville}. ${BOUTIQUE.horaires}, fermé le dimanche.`,
+    r: `Les commandes se retirent dans la boutique que vous avez choisie. ${BOUTIQUES.lyon.nom} : ${adresse(BOUTIQUES.lyon)}. ${BOUTIQUES.lyon.horaires}, fermé le dimanche. ${BOUTIQUES.strasbourg.nom} : ${adresse(BOUTIQUES.strasbourg)}. Les anniversaires sur place sont possibles à Lyon uniquement ; à Strasbourg, tout se récupère à emporter.`,
   },
   {
     q: "Comment se passe le paiement ?",
@@ -49,7 +49,7 @@ export default function Page() {
         <div className="mx-auto grid max-w-6xl items-center gap-8 px-4 pb-10 pt-5 md:grid-cols-2 md:gap-12 md:pb-16 md:pt-8">
           <div>
             <Image src="/images/logo.webp" alt="Donuts & Donuts" width={400} height={358} priority className="h-auto w-28 md:w-36" />
-            <p className="mt-4 inline-block rounded-full bg-white px-3 py-1 text-sm font-bold text-violet">📍 Lyon Part-Dieu · Westfield, niveau 2</p>
+            <p className="mt-4 inline-block rounded-full bg-white px-3 py-1 text-sm font-bold text-violet">📍 Lyon Part-Dieu · Strasbourg</p>
             <h1 className="mt-3 text-4xl font-bold text-magenta-fonce sm:text-5xl md:text-6xl">Des donuts pour toutes vos occasions</h1>
             <p className="mt-4 text-lg md:text-xl">
               Anniversaires, soirées, mariages, baptêmes, EVJF ou commandes pour les pros : dites-nous ce dont vous rêvez, on s&apos;occupe du reste.
@@ -83,7 +83,7 @@ export default function Page() {
             <h2 id="titre-demande" className="text-center text-3xl font-bold text-violet md:text-4xl">
               Quelle est votre demande ?
             </h2>
-            <p className="mb-8 mt-2 text-center">Choisissez votre type de demande pour ouvrir le formulaire.</p>
+            <p className="mb-8 mt-2 text-center">Choisissez votre boutique, puis votre type de demande pour ouvrir le formulaire.</p>
             <Demandes />
           </div>
         </section>
@@ -119,8 +119,8 @@ export default function Page() {
             <Galerie photos={GALERIE} />
             <p className="mt-6 text-center">
               Encore plus de photos sur{" "}
-              <a href={`https://www.instagram.com/${BOUTIQUE.instagram}/`} className="font-bold text-magenta-fonce underline" target="_blank" rel="noopener noreferrer">
-                Instagram @{BOUTIQUE.instagram}
+              <a href={`https://www.instagram.com/${BOUTIQUES.lyon.instagram}/`} className="font-bold text-magenta-fonce underline" target="_blank" rel="noopener noreferrer">
+                Instagram @{BOUTIQUES.lyon.instagram}
               </a>
             </p>
           </div>

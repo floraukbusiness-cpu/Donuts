@@ -1,7 +1,7 @@
 // Règles de validation des 3 formulaires, partagées entre le navigateur
 // (messages d'erreur immédiats) et le serveur (contrôle final, non contournable).
 import { z } from "zod";
-import { CRENEAUX_SUR_PLACE, JOURS_SUR_PLACE, MAX_ADULTES_SUR_PLACE, MAX_ENFANTS_SUR_PLACE, MINIMUM_DONUTS, PARFUMS_A_DEFINIR, PRESENTATIONS, SOURCES, TOUS_LES_PARFUMS } from "./catalogue";
+import { BOUTIQUE_IDS, CRENEAUX_SUR_PLACE, JOURS_SUR_PLACE, MAX_ADULTES_SUR_PLACE, MAX_ENFANTS_SUR_PLACE, MINIMUM_DONUTS, PARFUMS_A_DEFINIR, PRESENTATIONS, SOURCES, TOUS_LES_PARFUMS } from "./catalogue";
 import { dateMaximum, dateMinimum, dateMinimumSurPlace, estDimanche, jourSemaine } from "./dates";
 
 export const TYPES = ["anniversaire", "personnalisee", "pro"] as const;
@@ -51,6 +51,8 @@ const telephone = z
 
 function commun() {
   return {
+    // Optionnelle (Lyon par défaut) : une ancienne page restée ouverte n'envoie pas ce champ
+    boutique: z.enum(BOUTIQUE_IDS as [string, ...string[]], { errorMap: () => ({ message: "Choisissez une boutique." }) }).optional().default("lyon"),
     prenom: requis("Indiquez votre prénom.", 60),
     nom: requis("Indiquez votre nom.", 60),
     telephone,
@@ -114,6 +116,9 @@ export const anniversaireSchema = z
   })
   .superRefine((v, ctx) => {
     verifierCommande(v, ctx);
+    if (v.mode === "sur_place" && v.boutique === "strasbourg") {
+      ctx.addIssue({ code: "custom", path: ["mode"], message: "À Strasbourg, les anniversaires sont uniquement à emporter." });
+    }
     if (v.mode === "sur_place") {
       if (!v.apport) ctx.addIssue({ code: "custom", path: ["apport"], message: "Indiquez si vous apportez vos bougies et votre déco, ou si Donuts & Donuts s'occupe de tout." });
       if (v.date < dateMinimumSurPlace()) ctx.addIssue({ code: "custom", path: ["date"], message: "Pour un anniversaire sur place, réservez au moins 5 jours à l'avance." });

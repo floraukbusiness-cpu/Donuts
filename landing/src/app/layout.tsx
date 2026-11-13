@@ -28,9 +28,9 @@ function siteUrl(): string {
   return "http://localhost:3000";
 }
 
-const TITRE = "Donuts pour anniversaires, événements et professionnels à Lyon Part-Dieu";
+const TITRE = "Donuts pour anniversaires, événements et professionnels à Lyon Part-Dieu et Strasbourg";
 const DESCRIPTION =
-  "Donuts & Donuts Lyon Part-Dieu : commandez vos donuts personnalisés pour un anniversaire (sur place ou à emporter), une soirée, un mariage, un baptême, un EVJF ou pour votre entreprise. Westfield La Part-Dieu, niveau 2.";
+  "Donuts & Donuts Lyon Part-Dieu et Strasbourg : commandez vos donuts personnalisés pour un anniversaire (sur place à Lyon, ou à emporter), une soirée, un mariage, un baptême, un EVJF ou pour votre entreprise.";
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl()),
@@ -40,7 +40,7 @@ export const metadata: Metadata = {
   openGraph: {
     type: "website",
     locale: "fr_FR",
-    siteName: "Donuts & Donuts Lyon Part-Dieu",
+    siteName: "Donuts & Donuts Lyon Part-Dieu et Strasbourg",
     title: TITRE,
     description: DESCRIPTION,
     url: "/",

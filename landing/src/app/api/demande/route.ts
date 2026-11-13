@@ -2,7 +2,7 @@
 import { NextResponse } from "next/server";
 import { corpsEmail, sujet, type Utm } from "@/lib/email";
 import { formDataToObject, TYPES, UTM_KEYS, valider, type TypeDemande } from "@/lib/schema";
-import { enregistrerDemande, envoyerEmail, marquerEmailEnvoye, stockerImage } from "@/lib/services";
+import { enregistrerDemande, envoyerNotification, marquerEmailEnvoye, stockerImage } from "@/lib/services";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -85,7 +85,7 @@ export async function POST(req: Request) {
   let emailOk = false;
   try {
     const { html, text } = corpsEmail(d, utm, images.map((i) => i.url));
-    await envoyerEmail({ subject: sujet(d), html, text, replyTo: email });
+    await envoyerNotification(d.boutique, { subject: sujet(d), html, text, replyTo: email });
     emailOk = true;
     if (id) await marquerEmailEnvoye(id).catch((e) => console.error("[demande] statut e-mail non mis à jour", e));
   } catch (e) {

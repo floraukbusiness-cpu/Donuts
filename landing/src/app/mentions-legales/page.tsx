@@ -77,7 +77,7 @@ export default function MentionsLegales() {
             consentement (case à cocher) et des mesures précontractuelles prises à votre demande.
           </p>
           <p>
-            <strong>Destinataires :</strong> uniquement l&apos;équipe de la boutique {BOUTIQUE.nom}. Les données sont hébergées par Supabase
+            <strong>Destinataires :</strong> uniquement l&apos;équipe de la boutique concernée (Lyon Part-Dieu ou Strasbourg). Les données sont hébergées par Supabase
             (base de données, serveurs dans l&apos;Union européenne), transmises par e-mail via Resend et le site est hébergé par Vercel.
             Elles ne sont ni vendues ni utilisées à des fins publicitaires.
           </p>

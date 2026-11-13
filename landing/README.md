@@ -30,19 +30,23 @@ Compte créé **avec l'adresse donutsdonuts.lyonpartdieu@gmail.com** (sans nom d
 | `SUPABASE_SECRET_KEY` | clé secrète Supabase |
 | `RESEND_API_KEY` | clé Resend |
 | `NOTIFY_EMAIL` | `donutsdonuts.lyonpartdieu@gmail.com` |
+| `NOTIFY_EMAIL_STRASBOURG` *(facultatif)* | adresse qui reçoit les demandes de Strasbourg. Sans cette variable, elles arrivent sur `NOTIFY_EMAIL`. **Sans nom de domaine vérifié chez Resend, seule l'adresse du compte Resend peut recevoir** : si une autre adresse est refusée, la demande est envoyée à `NOTIFY_EMAIL` avec la mention « à transmettre à … ». |
 | `SITE_URL` *(facultatif)* | adresse publique définitive, ex. `https://commandes-donuts-lyon.vercel.app` |
 
 4. **Deploy**. Chaque modification poussée sur la branche `main` est ensuite mise en ligne automatiquement.
 
-Lien pour la bio Instagram, avec suivi de provenance :
-`https://<votre-adresse>.vercel.app/?utm_source=instagram&utm_medium=bio`
+**Deux boutiques, un seul site.** Un lien par compte Instagram (la boutique est alors présélectionnée) :
+- Lyon : `https://<votre-adresse>.vercel.app/?boutique=lyon&utm_source=instagram&utm_medium=bio`
+- Strasbourg : `https://<votre-adresse>.vercel.app/?boutique=strasbourg&utm_source=instagram&utm_medium=bio`
+
+Sans `boutique=` dans le lien, la personne choisit sa boutique en haut de la page.
 
 ---
 
 ## 2. Voir les demandes
 
 Supabase → **Table Editor** :
-- **`demandes_lisibles`** : vue pratique, la plus récente en premier (type, client, téléphone, date souhaitée, quantités, provenance UTM…).
+- **`demandes_lisibles`** : vue pratique, la plus récente en premier (**boutique**, type, client, téléphone, date souhaitée, quantités, provenance UTM…). Colonne `boutique` : Lyon ou Strasbourg (filtre : **Filter** → `boutique`). Après une mise à jour de ce fichier, relancer `supabase/schema.sql` dans le SQL Editor pour que la vue la contienne.
 - **`demandes`** : la table complète. Les champs propres à chaque formulaire sont dans la colonne `details`.
 - Filtrer par type : bouton **Filter** → `type` = `anniversaire` / `personnalisee` / `pro`.
 - Suivi : modifier la colonne `statut` dans `demandes` (ex. `rappelée`, `confirmée`, `annulée`).
@@ -56,6 +60,7 @@ Supabase → **Table Editor** :
 
 | Je veux changer… | Fichier |
 |---|---|
+| **Boutiques** (adresse, horaires, Instagram, e-mail, sur place oui/non) : bloc `BOUTIQUES`, Lyon et Strasbourg ; un champ laissé vide n'est pas affiché | [`src/lib/catalogue.ts`](src/lib/catalogue.ts) |
 | Prix, minimum de commande, offre « 12 = 1 offert », présentations, options (dont `BOUGIE` 2 € et `BALLON` 3 € par enfant, anniversaire sur place), **parfums**, adresse, horaires, Instagram | [`src/lib/catalogue.ts`](src/lib/catalogue.ts) |
 | Anniversaire sur place : jours ouverts (mercredi, samedi), délai (5 jours), créneaux (1 h, pause de 30 min, 11h-18h), limites d'invités | [`src/lib/catalogue.ts`](src/lib/catalogue.ts) : `JOURS_SUR_PLACE`, `DELAI_SUR_PLACE_JOURS`, `SUR_PLACE_DEBUT/FIN`, `CRENEAU_DUREE/PAUSE`, `MAX_ENFANTS/ADULTES_SUR_PLACE` |
 | Textes de la page, étapes, FAQ, galerie | [`src/app/page.tsx`](src/app/page.tsx) |

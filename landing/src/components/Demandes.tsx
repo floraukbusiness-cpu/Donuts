@@ -1,6 +1,7 @@
 "use client";
 import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
+import { BOUTIQUE_IDS, BOUTIQUES, estBoutique, type BoutiqueId } from "@/lib/catalogue";
 import { UTM_KEYS, type TypeDemande } from "@/lib/schema";
 import { Carrousel, type Photo } from "./Carrousel";
 import { FormulaireDemande } from "./FormulaireDemande";
@@ -12,6 +13,8 @@ type Carte = {
   emoji: string;
   titre: string;
   texte: string;
+  /** Texte propre à Strasbourg (à emporter uniquement), si différent */
+  texteStrasbourg?: string;
   photos: Photo[];
   photoFormulaire?: { src: string; alt: string };
 };
@@ -22,6 +25,7 @@ const CARTES: Carte[] = [
     emoji: "🎂",
     titre: "Anniversaire",
     texte: "Sur place à la boutique ou à emporter.",
+    texteStrasbourg: "À emporter uniquement.",
     photos: [
       { src: "/images/anniversaire-princesse.webp", alt: "Enfants en princesses riant devant un plateau de donuts roses à la couronne", position: "center 35%" },
       { src: "/images/carte-anniversaire.webp", alt: "Pièce montée de donuts fleurie avec le chiffre 10 et « Joyeux anniversaire »", position: "center 55%" },
@@ -80,12 +84,45 @@ function lireUtm(): Utm {
   }
 }
 
+/** Boutique demandée par le lien (?boutique=lyon ou ?boutique=strasbourg), gardée pendant la visite. */
+function lireBoutique(): BoutiqueId | "" {
+  try {
+    const p = new URLSearchParams(window.location.search).get("boutique")?.toLowerCase();
+    if (estBoutique(p)) {
+      sessionStorage.setItem("dd_boutique", p);
+      return p;
+    }
+    const s = sessionStorage.getItem("dd_boutique");
+    return estBoutique(s) ? s : "";
+  } catch {
+    return "";
+  }
+}
+
+const SOUS_TITRE: Record<BoutiqueId, string> = {
+  lyon: "Westfield La Part-Dieu · sur place ou à emporter",
+  strasbourg: "Place des Halles · à emporter uniquement",
+};
+
 export function Demandes() {
   const [actif, setActif] = useState<TypeDemande | null>(null);
   const [utm, setUtm] = useState<Utm>({});
+  const [boutique, setBoutique] = useState<BoutiqueId | "">("");
   const panneauRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => setUtm(lireUtm()), []);
+  useEffect(() => {
+    setUtm(lireUtm());
+    setBoutique(lireBoutique());
+  }, []);
+
+  function choisirBoutique(b: BoutiqueId) {
+    setBoutique(b);
+    try {
+      sessionStorage.setItem("dd_boutique", b);
+    } catch {
+      /* navigation privée : sans conséquence */
+    }
+  }
 
   function ouvrir(t: TypeDemande) {
     setActif(t);
@@ -99,6 +136,34 @@ export function Demandes() {
 
   return (
     <>
+      <fieldset className="mb-8">
+        <legend className="label mb-3 w-full text-center font-titre text-xl font-semibold text-violet">Dans quelle boutique souhaitez-vous commander ?</legend>
+        <div className="mx-auto grid max-w-2xl gap-3 sm:grid-cols-2">
+          {BOUTIQUE_IDS.map((id) => (
+            <label
+              key={id}
+              className={`flex min-h-16 cursor-pointer flex-col justify-center rounded-2xl border-[3px] bg-white px-5 py-3 shadow-sm has-[:focus-visible]:outline has-[:focus-visible]:outline-[3px] has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-bleu ${
+                boutique === id ? "border-magenta ring-4 ring-magenta/20" : "border-transparent"
+              }`}
+            >
+              <input type="radio" name="boutique-choix" value={id} checked={boutique === id} onChange={() => choisirBoutique(id)} className="sr-only" />
+              <span className="font-titre text-lg font-semibold text-violet">
+                <span aria-hidden="true">{boutique === id ? "● " : "○ "}</span>
+                {BOUTIQUES[id].nom}
+              </span>
+              <span className="text-sm">{SOUS_TITRE[id]}</span>
+            </label>
+          ))}
+        </div>
+      </fieldset>
+
+      {!boutique && (
+        <p className="rounded-2xl bg-white p-4 text-center font-bold text-violet shadow-sm" role="status">
+          Choisissez votre boutique pour voir les formules.
+        </p>
+      )}
+
+      {boutique && (
       <ul className="grid gap-4 md:grid-cols-3">
         {CARTES.map((c) => {
           const estActif = actif === c.type;
@@ -121,7 +186,7 @@ export function Demandes() {
                     <span aria-hidden="true">{c.emoji} </span>
                     {c.titre}
                   </span>
-                  <span className="mt-1 block text-[0.98rem]">{c.texte}</span>
+                  <span className="mt-1 block text-[0.98rem]">{boutique === "strasbourg" && c.texteStrasbourg ? c.texteStrasbourg : c.texte}</span>
                   <span className="mt-2 inline-block font-bold text-magenta-fonce">
                     {estActif ? "Formulaire ouvert ↓" : "Faire ma demande →"}
                   </span>
@@ -131,13 +196,15 @@ export function Demandes() {
           );
         })}
       </ul>
+      )}
 
       <div id="formulaire-demande" ref={panneauRef} className="scroll-mt-4">
-        {carte && (
+        {carte && boutique && (
           <div className="mt-8">
             <h3 tabIndex={-1} className="mb-4 text-center font-titre text-2xl font-semibold text-violet outline-none sm:text-3xl">
               <span aria-hidden="true">{carte.emoji} </span>
               {carte.titre}
+              <span className="block text-lg font-normal text-[#5d3a58]">{BOUTIQUES[boutique].nom}</span>
             </h3>
             {carte.photoFormulaire && (
               <Image
@@ -150,7 +217,7 @@ export function Demandes() {
               />
             )}
             {/* key : chaque type a son propre formulaire, remis à zéro quand on change */}
-            <FormulaireDemande key={carte.type} type={carte.type} utm={utm} />
+            <FormulaireDemande key={`${carte.type}-${boutique}`} type={carte.type} utm={utm} boutique={boutique} />
           </div>
         )}
       </div>

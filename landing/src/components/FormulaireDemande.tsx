@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
-import { BALLON, BOUGIE, CRENEAUX_SUR_PLACE, DECO, JOURS_SUR_PLACE, MAX_ADULTES_SUR_PLACE, MAX_ENFANTS_SUR_PLACE, MINIMUM_DONUTS, PRESENTATIONS, PRIX, SOURCES } from "@/lib/catalogue";
+import { BALLON, BOUGIE, BOUTIQUES, type BoutiqueId, CRENEAUX_SUR_PLACE, DECO, JOURS_SUR_PLACE, MAX_ADULTES_SUR_PLACE, MAX_ENFANTS_SUR_PLACE, MINIMUM_DONUTS, PRESENTATIONS, PRIX, SOURCES } from "@/lib/catalogue";
 import { dateMaximum, dateMinimum, dateMinimumSurPlace } from "@/lib/dates";
 import {
   EVENEMENTS,
@@ -19,9 +19,10 @@ import { Champ, Choix, Erreur, Liste, Zone } from "./champs";
 import { PhotosInspiration } from "./PhotosInspiration";
 import { PHOTOS_TOTAL_MAX_OCTETS } from "@/lib/photos";
 
-type Props = { type: TypeDemande; utm: Partial<Record<(typeof UTM_KEYS)[number], string>> };
+type Props = { type: TypeDemande; utm: Partial<Record<(typeof UTM_KEYS)[number], string>>; boutique: BoutiqueId };
 
-export function FormulaireDemande({ type, utm }: Props) {
+export function FormulaireDemande({ type, utm, boutique }: Props) {
+  const shop = BOUTIQUES[boutique];
   const formRef = useRef<HTMLFormElement>(null);
   const merciRef = useRef<HTMLDivElement>(null);
   const [erreurs, setErreurs] = useState<ErreursChamps>({});
@@ -36,7 +37,8 @@ export function FormulaireDemande({ type, utm }: Props) {
   const [apport, setApport] = useState("");
 
   // Champs qui font apparaître d'autres champs
-  const [mode, setMode] = useState("");
+  // À Strasbourg : à emporter uniquement, la question « sur place ou à emporter ? » n'est pas posée
+  const [mode, setMode] = useState(shop.surPlace ? "" : "a_emporter");
   const [evenement, setEvenement] = useState("");
   const [secteur, setSecteur] = useState("");
   const [frequence, setFrequence] = useState("");
@@ -112,7 +114,7 @@ export function FormulaireDemande({ type, utm }: Props) {
           🍩
         </p>
         <h3 className="mt-3 text-2xl font-bold text-violet sm:text-3xl">Merci, la boutique vous recontacte sous 48 h</h3>
-        <p className="mt-3">Votre demande a bien été envoyée à Donuts &amp; Donuts Lyon Part-Dieu.</p>
+        <p className="mt-3">Votre demande a bien été envoyée à {shop.complet}.</p>
       </div>
     );
   }
@@ -124,6 +126,7 @@ export function FormulaireDemande({ type, utm }: Props) {
   return (
     <form ref={formRef} onSubmit={envoyer} noValidate className="space-y-6 rounded-3xl bg-white p-5 shadow-sm sm:p-8" aria-label={`Demande : ${LIBELLES_TYPE[type].titre}`}>
       <input type="hidden" name="type" value={type} />
+      <input type="hidden" name="boutique" value={boutique} />
       <input type="hidden" name="t" value={debut} />
       {UTM_KEYS.map((k) => (
         <input key={k} type="hidden" name={k} value={utm[k] ?? ""} />
@@ -179,17 +182,25 @@ export function FormulaireDemande({ type, utm }: Props) {
       {/* ── Spécifique anniversaire ──────────────────── */}
       {type === "anniversaire" && (
         <Groupe titre="L'anniversaire">
-          <Choix
-            name="mode"
-            label="Sur place ou à emporter ?"
-            requis
-            options={[
-              { value: "sur_place", label: "Sur place, à la boutique" },
-              { value: "a_emporter", label: "À emporter" },
-            ]}
-            onValeur={(v) => setMode(v)}
-            erreur={err("mode")}
-          />
+          {shop.surPlace ? (
+            <Choix
+              name="mode"
+              label="Sur place ou à emporter ?"
+              requis
+              options={[
+                { value: "sur_place", label: "Sur place, à la boutique" },
+                { value: "a_emporter", label: "À emporter" },
+              ]}
+              onValeur={(v) => setMode(v)}
+              erreur={err("mode")}
+            />
+          ) : (
+            <>
+              <input type="hidden" name="mode" value="a_emporter" />
+              <p className="rounded-xl bg-poudre p-3 font-bold text-violet">À {shop.nom}, les anniversaires sont uniquement à emporter.</p>
+              <Erreur id="mode-err" message={err("mode")} />
+            </>
+          )}
           {mode === "a_emporter" && (
             <Champ
               name="date"
@@ -373,7 +384,7 @@ export function FormulaireDemande({ type, utm }: Props) {
               aria-describedby={err("rgpd") ? `rgpd-err-${type}` : undefined}
             />
             <span>
-              J&apos;accepte que Donuts &amp; Donuts Lyon Part-Dieu utilise ces informations pour me recontacter au sujet de ma demande.{" "}
+              J&apos;accepte que {shop.complet} utilise ces informations pour me recontacter au sujet de ma demande.{" "}
               <a href="/mentions-legales#donnees" className="font-bold text-magenta-fonce underline">
                 En savoir plus
               </a>

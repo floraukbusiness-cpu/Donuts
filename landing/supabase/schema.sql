@@ -34,10 +34,14 @@ create index if not exists demandes_type_idx on public.demandes (type);
 alter table public.demandes enable row level security;
 
 -- Vue lisible pour consulter les demandes dans le Table Editor
-create or replace view public.demandes_lisibles
+-- (supprimée puis recréée pour pouvoir ajouter des colonnes : relancer ce script est sans risque)
+drop view if exists public.demandes_lisibles;
+create view public.demandes_lisibles
 with (security_invoker = true) as
 select
   created_at at time zone 'Europe/Paris' as recue_le,
+  case coalesce(details ->> 'boutique', 'lyon')
+       when 'strasbourg' then 'Strasbourg' else 'Lyon' end as boutique,
   case type when 'anniversaire' then 'Anniversaire'
             when 'personnalisee' then 'Personnalisée'
             else 'Pro' end as type,

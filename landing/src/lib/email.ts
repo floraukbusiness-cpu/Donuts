@@ -1,5 +1,5 @@
 // Mise en forme de l'e-mail de notification envoyé à la boutique.
-import { BALLON, BOUGIE, DECO, PRESENTATIONS } from "./catalogue";
+import { BALLON, BOUGIE, BOUTIQUES, DECO, PRESENTATIONS, type BoutiqueId } from "./catalogue";
 import { formatDateFr } from "./dates";
 import { LIBELLES_TYPE, type Demande } from "./schema";
 
@@ -35,6 +35,7 @@ function lignesOptionsSurPlace(d: { apport?: string; enfants: number }): Ligne[]
 
 export function lignesDemande(d: Demande): Ligne[] {
   const contact: Ligne[] = [
+    ["Boutique", BOUTIQUES[d.boutique as BoutiqueId]?.nom ?? d.boutique],
     ["Prénom", d.prenom],
     ["Nom", d.nom],
     ["Téléphone", d.telephone],
@@ -95,7 +96,9 @@ export function lignesDemande(d: Demande): Ligne[] {
 
 export function sujet(d: Demande): string {
   const extra = d.type === "pro" ? ` (${d.societe})` : "";
-  return `${LIBELLES_TYPE[d.type].tag} ${d.prenom} ${d.nom}${extra} – ${formatDateFr(d.date)}`;
+  // L'objet commence toujours par le type ; la boutique suit : « [ANNIVERSAIRE] [LYON] Camille Martin – … »
+  const boutique = d.boutique.toUpperCase();
+  return `${LIBELLES_TYPE[d.type].tag} [${boutique}] ${d.prenom} ${d.nom}${extra} – ${formatDateFr(d.date)}`;
 }
 
 const esc = (s: string) =>

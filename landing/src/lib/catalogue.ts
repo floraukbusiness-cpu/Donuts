@@ -118,13 +118,64 @@ export const PARFUMS_A_DEFINIR = "À définir ensemble";
 
 export const SOURCES = ["Instagram", "TikTok", "En boutique", "Bouche-à-oreille", "Autre"] as const;
 
-export const BOUTIQUE = {
-  nom: "Donuts & Donuts Lyon Part-Dieu",
-  lieu: "Centre commercial Westfield La Part-Dieu, niveau 2",
-  rue: "17 rue du Docteur Bouchut",
-  codePostal: "69003",
-  ville: "Lyon",
-  horaires: "Ouvert du lundi au samedi, de 10h à 20h",
-  instagram: "donutsanddonuts_lyonpartdieu",
-  email: "donutsdonuts.lyonpartdieu@gmail.com",
-} as const;
+// ─────────────────────────────────────────────────────────────────────────────
+// BOUTIQUES : la page sert Lyon et Strasbourg (un lien par compte Instagram).
+//   https://…/?boutique=lyon         → Lyon présélectionnée
+//   https://…/?boutique=strasbourg   → Strasbourg présélectionnée
+// Un champ vide n'est simplement pas affiché sur le site (à compléter quand on l'a).
+// ─────────────────────────────────────────────────────────────────────────────
+export type BoutiqueId = "lyon" | "strasbourg";
+export const BOUTIQUE_IDS: readonly BoutiqueId[] = ["lyon", "strasbourg"];
+
+export type Boutique = {
+  id: BoutiqueId;
+  nom: string; // nom court, pour les boutons
+  complet: string; // nom complet, pour les textes
+  lieu: string;
+  rue: string;
+  codePostal: string;
+  ville: string;
+  horaires: string;
+  instagram: string;
+  email: string; // adresse de contact affichée (mentions légales)
+  surPlace: boolean; // anniversaires sur place possibles ?
+};
+
+export const BOUTIQUES: Record<BoutiqueId, Boutique> = {
+  lyon: {
+    id: "lyon",
+    nom: "Lyon Part-Dieu",
+    complet: "Donuts & Donuts Lyon Part-Dieu",
+    lieu: "Centre commercial Westfield La Part-Dieu, niveau 2",
+    rue: "17 rue du Docteur Bouchut",
+    codePostal: "69003",
+    ville: "Lyon",
+    horaires: "Ouvert du lundi au samedi, de 10h à 20h",
+    instagram: "donutsanddonuts_lyonpartdieu",
+    email: "donutsdonuts.lyonpartdieu@gmail.com",
+    surPlace: true,
+  },
+  strasbourg: {
+    id: "strasbourg",
+    nom: "Strasbourg",
+    complet: "Donuts & Donuts Strasbourg",
+    lieu: "Centre commercial Place des Halles",
+    rue: "", // à compléter
+    codePostal: "67000",
+    ville: "Strasbourg",
+    horaires: "", // à compléter
+    instagram: "", // à compléter
+    email: "", // à compléter
+    surPlace: false, // à Strasbourg : à emporter uniquement
+  },
+};
+
+/** Boutique historique (Lyon) : mentions légales, données structurées. */
+export const BOUTIQUE = BOUTIQUES.lyon;
+
+export const estBoutique = (v: unknown): v is BoutiqueId => typeof v === "string" && (BOUTIQUE_IDS as readonly string[]).includes(v);
+
+/** « Centre commercial X, rue, 67000 Strasbourg » sans les morceaux vides */
+export function adresse(b: Boutique): string {
+  return [b.lieu, b.rue, `${b.codePostal} ${b.ville}`].filter(Boolean).join(", ");
+}

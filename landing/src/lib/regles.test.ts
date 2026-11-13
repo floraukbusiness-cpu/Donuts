@@ -84,6 +84,18 @@ describe("validation", () => {
     expect(trop.ok).toBe(false);
     expect(valider("anniversaire", { ...sp, date: dateSurPlace(), creneau: "10h00 – 11h00" }).ok).toBe(false);
   });
+  it("Strasbourg : pas de sur place ; boutique par défaut = Lyon", () => {
+    const sp = { ...base, date: dateSurPlace(), type: "anniversaire", mode: "sur_place", creneau: "14h00 – 15h00", apport: "apporte", enfants: "2", adultes: "1", nb_donuts: "12", presentation: "boite" };
+    const lyon = valider("anniversaire", sp);
+    expect(lyon.ok).toBe(true);
+    if (lyon.ok) expect(lyon.demande.boutique).toBe("lyon");
+    const strasbourg = valider("anniversaire", { ...sp, boutique: "strasbourg" });
+    expect(strasbourg.ok).toBe(false);
+    if (!strasbourg.ok) expect(strasbourg.erreurs.mode).toMatch(/uniquement à emporter/);
+    const emporter = { ...base, type: "anniversaire", mode: "a_emporter", heure_retrait: "12:00", nb_donuts: "12", presentation: "boite", boutique: "strasbourg" };
+    expect(valider("anniversaire", emporter).ok).toBe(true);
+    expect(valider("anniversaire", { ...emporter, boutique: "paris" }).ok).toBe(false);
+  });
   it("sur place : bougies et déco — apportées, ou Donuts & Donuts s'occupe de tout", () => {
     const sp = { ...base, date: dateSurPlace(), type: "anniversaire", mode: "sur_place", creneau: "14h00 – 15h00", enfants: "2", adultes: "1", nb_donuts: "12", presentation: "boite" };
     expect(valider("anniversaire", sp).ok).toBe(false); // choix obligatoire
@@ -112,7 +124,7 @@ describe("validation", () => {
     const ok = valider("pro", { ...pro, siret: "123 456 789 00012" });
     expect(ok.ok).toBe(true);
     if (ok.ok) {
-      expect(sujet(ok.demande)).toMatch(/^\[PRO\] Camille Martin \(X\)/);
+      expect(sujet(ok.demande)).toMatch(/^\[PRO\] \[LYON\] Camille Martin \(X\)/);
       expect(lignesDemande(ok.demande).find(([k]) => k === "SIRET")?.[1]).toBe("12345678900012");
     }
   });

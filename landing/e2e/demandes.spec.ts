@@ -16,8 +16,14 @@ function dansJours(n: number) {
   return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
 }
 
-async function ouvrir(page: Page, carte: RegExp, url = "/") {
+/** Choix de la boutique (étape obligatoire avant de voir les formules, sauf lien ?boutique=…). */
+async function choisirBoutique(page: Page, nom = "Lyon Part-Dieu") {
+  await page.locator('label:has(input[name="boutique-choix"])', { hasText: nom }).click();
+}
+
+async function ouvrir(page: Page, carte: RegExp, url = "/", boutique = "Lyon Part-Dieu") {
   await page.goto(url);
+  if (!url.includes("boutique=")) await choisirBoutique(page, boutique);
   await page.getByRole("button", { name: carte }).click();
   const form = page.locator("form");
   await expect(form).toBeVisible();
@@ -98,6 +104,7 @@ test("accessibilité (axe, WCAG AA) : accueil + formulaire ouvert + mentions", a
   let r = await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa", "wcag21aa", "wcag22aa"]).analyze();
   expect(r.violations, JSON.stringify(r.violations, null, 1)).toEqual([]);
 
+  await choisirBoutique(page);
   await page.getByRole("button", { name: /Anniversaire/ }).click();
   await page.getByLabel("Sur place, à la boutique").check();
   await page.locator("form").getByRole("button", { name: "Envoyer ma demande" }).click(); // affiche les erreurs
@@ -121,7 +128,7 @@ test("formulaire vide : messages d'erreur et rien n'est envoyé", async ({ page 
 
 test("calendrier : dates à moins de 7 jours bloquées avec explication", async ({ page }) => {
   const f = await ouvrir(page, /Anniversaire/);
-  await page.getByLabel("À emporter").check(); // la date apparaît dès ce choix
+  await page.locator("form").getByLabel("À emporter", { exact: true }).check(); // la date apparaît dès ce choix
   const date = f.locator('[name="date"]');
   await expect(date).toHaveAttribute("min", dansJours(7));
   await expect(f.getByText(/au moins 7 jours/).first()).toBeVisible();
@@ -133,6 +140,48 @@ test("calendrier : dates à moins de 7 jours bloquées avec explication", async 
   await finir(page, dansJours(3));
   await expect(f.getByText(/choisissez une date à partir de J\+7/)).toBeVisible();
   expect(await appels(page)).toHaveLength(0);
+});
+
+test("boutiques : choix de la boutique avant les formules ; le lien ?boutique=strasbourg la présélectionne", async ({ page }) => {
+  await page.goto("/");
+  await expect(page.getByText("Dans quelle boutique souhaitez-vous commander ?")).toBeVisible();
+  await expect(page.getByText("Choisissez votre boutique pour voir les formules.")).toBeVisible();
+  await expect(page.getByRole("button", { name: /Faire ma demande/ })).toHaveCount(0); // pas de formules sans boutique
+  await choisirBoutique(page, "Strasbourg");
+  await expect(page.getByRole("button", { name: /Anniversaire/ })).toBeVisible();
+  await expect(page.getByText("À emporter uniquement.").first()).toBeVisible(); // texte de la carte Anniversaire à Strasbourg
+  // Lien d'un compte Instagram : boutique présélectionnée, formules visibles tout de suite
+  await page.goto("/?boutique=strasbourg&utm_source=instagram");
+  await expect(page.locator('input[name="boutique-choix"][value="strasbourg"]')).toBeChecked();
+  await expect(page.getByRole("button", { name: /Anniversaire/ })).toBeVisible();
+  await page.goto("/?boutique=lyon");
+  await expect(page.locator('input[name="boutique-choix"][value="lyon"]')).toBeChecked();
+  // changer de boutique referme le formulaire ouvert
+  await page.getByRole("button", { name: /Anniversaire/ }).click();
+  await expect(page.locator("form")).toBeVisible();
+  await choisirBoutique(page, "Strasbourg");
+  await expect(page.locator("form")).toHaveCount(1); // le formulaire est recréé pour la nouvelle boutique
+  await expect(page.locator('input[name="boutique"]')).toHaveValue("strasbourg");
+});
+
+test("STRASBOURG : anniversaire à emporter uniquement, envoi de bout en bout", async ({ page }) => {
+  const f = await ouvrir(page, /Anniversaire/, "/?boutique=strasbourg");
+  await expect(f.getByText("À Strasbourg, les anniversaires sont uniquement à emporter.")).toBeVisible();
+  await expect(f.getByLabel("Sur place, à la boutique")).toHaveCount(0);
+  await expect(f.getByText("Bougies et décoration")).toHaveCount(0);
+  await expect(f.getByRole("table")).toHaveCount(0); // pas de calendrier « sur place »
+  await coordonnees(page);
+  await f.locator('[name="heure_retrait"]').fill("15:00");
+  await f.locator('[name="nb_donuts"]').fill("12");
+  await page.getByLabel(/Boîte\(s\)/).check();
+  await finir(page);
+  await expect(page.getByRole("status")).toContainText("Merci, la boutique vous recontacte sous 48 h");
+  await expect(page.getByRole("status")).toContainText("Donuts & Donuts Strasbourg");
+  const c = await appels(page);
+  expect(c.find((x) => x.path === "/rest/v1/demandes")!.json).toMatchObject({ type: "anniversaire", details: { boutique: "strasbourg", mode: "a_emporter", heure_retrait: "15:00" } });
+  const mail = c.find((x) => x.path === "/emails")!;
+  expect(String(mail.json!.subject)).toMatch(/^\[ANNIVERSAIRE\] \[STRASBOURG\] Camille Martin – /);
+  expect(String(mail.json!.text)).toContain("Boutique : Strasbourg");
 });
 
 test("anniversaire sur place : calendrier mercredi/samedi dès J+5, créneaux d'1 h, 4 enfants et 1 adulte maximum", async ({ page }) => {
@@ -178,7 +227,7 @@ test("anniversaire sur place : calendrier mercredi/samedi dès J+5, créneaux d'
 
 test("bougies et déco : question seulement sur place ; « Donuts & Donuts s'occupe de tout » = bougie + 1 ballon par enfant", async ({ page }) => {
   const f = await ouvrir(page, /Anniversaire/);
-  await page.getByLabel("À emporter").check();
+  await page.locator("form").getByLabel("À emporter", { exact: true }).check();
   await expect(f.getByText("Bougies et décoration")).toHaveCount(0);
   await page.getByLabel("Sur place, à la boutique").check();
   await expect(f.getByText("Bougies et décoration")).toBeVisible();
@@ -220,7 +269,7 @@ test("anniversaire sur place : sans date, le message d'erreur s'affiche sur le c
 test("minimum de 6 donuts contrôlé", async ({ page }) => {
   const f = await ouvrir(page, /Anniversaire/);
   await coordonnees(page);
-  await page.getByLabel("À emporter").check();
+  await page.locator("form").getByLabel("À emporter", { exact: true }).check();
   await f.locator('[name="heure_retrait"]').fill("15:00");
   await f.locator('[name="nb_donuts"]').fill("3");
   await f.locator('[name="nb_minis"]').fill("2");
@@ -288,7 +337,7 @@ test("ANNIVERSAIRE sur place : envoi de bout en bout + UTM", async ({ page }) =>
     },
   });
   const mail = c.find((x) => x.path === "/emails")!;
-  expect(String(mail.json!.subject)).toMatch(/^\[ANNIVERSAIRE\] Camille Martin – /);
+  expect(String(mail.json!.subject)).toMatch(/^\[ANNIVERSAIRE\] \[LYON\] Camille Martin – /);
   expect(mail.json!.to).toEqual(["donutsdonuts.lyonpartdieu@gmail.com"]);
   expect(mail.json!.reply_to).toBe("camille@example.com");
   for (const t of ["Sur place", "14h00 – 15h00", "Léa", "s'occupe de tout", "Bougie d'anniversaire", "4 enfants × 3 € = 12 €", "Total options (bougie + ballons) : 14 €", "Pièce montée", "Chocolatés : Nutella", "Licorne, rose et doré", "utm_source=instagram"]) {
@@ -329,7 +378,7 @@ test("PERSONNALISÉE avec image d'inspiration : envoi de bout en bout", async ({
     details: { evenement: "Autre", evenement_autre: "Gender reveal", nb_minis: 24, presentation: "brochettes", heure_retrait: "11:30" },
   });
   const mail = c.find((x) => x.path === "/emails")!;
-  expect(String(mail.json!.subject)).toMatch(/^\[PERSONNALISÉE\] Camille Martin – /);
+  expect(String(mail.json!.subject)).toMatch(/^\[PERSONNALISÉE\] \[LYON\] Camille Martin – /);
   expect(String(mail.json!.html)).toContain("Voir la photo");
   expect(String(mail.json!.text)).toContain("Autre : Gender reveal");
 });
@@ -348,6 +397,7 @@ test("photos : 3 maximum, retrait possible", async ({ page }) => {
 
 test("cartes : diaporama de photos (clic, flèches, points) sans ouvrir le formulaire", async ({ page }) => {
   await page.goto("/");
+  await choisirBoutique(page);
   const carrousel = page.getByRole("region", { name: /Photos : Anniversaire/ });
   const statut = carrousel.locator("p[aria-live]");
   await expect(statut).toHaveText("Photo 1 sur 4");
@@ -433,7 +483,7 @@ test("PRO récurrent, parfums à définir : envoi de bout en bout", async ({ pag
     details: { societe: "Traiteur Bellecour", secteur: "Traiteur", siret: "12345678900012", usage: "Revente", frequence: "recurrente", rythme: "Chaque vendredi", parfums: ["À définir ensemble"] },
   });
   const mail = c.find((x) => x.path === "/emails")!;
-  expect(String(mail.json!.subject)).toMatch(/^\[PRO\] Camille Martin \(Traiteur Bellecour\) – /);
+  expect(String(mail.json!.subject)).toMatch(/^\[PRO\] \[LYON\] Camille Martin \(Traiteur Bellecour\) – /);
   expect(String(mail.json!.text)).toContain("Date de la première commande");
 });
 
@@ -498,4 +548,23 @@ test("le serveur refuse un anniversaire sur place un jour fermé ou trop proche"
   expect(r4.status()).toBe(422);
   expect((await r4.json()).erreurs.apport).toMatch(/bougies et votre déco/);
   expect(await appels(page)).toHaveLength(0);
+});
+
+test("le serveur refuse un anniversaire sur place à Strasbourg ; sans boutique, la demande est pour Lyon", async ({ page }) => {
+  const base = {
+    type: "anniversaire", t: String(Date.now() - 60_000), prenom: "A", nom: "B", telephone: "0612345678", email: "a@example.com",
+    rgpd: "on", mode: "sur_place", creneau: "14h00 – 15h00", apport: "apporte", enfants: "2", adultes: "1", nb_donuts: "12", presentation: "boite",
+    date: prochainJourOuvert(6),
+  };
+  const r = await page.request.post("/api/demande", { multipart: { ...base, boutique: "strasbourg" } });
+  expect(r.status()).toBe(422);
+  expect((await r.json()).erreurs.mode).toMatch(/uniquement à emporter/);
+  expect(await appels(page)).toHaveLength(0);
+  const ok = await page.request.post("/api/demande", { multipart: base }); // ancienne page : pas de champ boutique
+  expect(ok.ok()).toBe(true);
+  const c = await appels(page);
+  expect(c.find((x) => x.path === "/rest/v1/demandes")!.json).toMatchObject({ details: { boutique: "lyon" } });
+  expect(String(c.find((x) => x.path === "/emails")!.json!.subject)).toMatch(/\[LYON\]/);
+  const inconnue = await page.request.post("/api/demande", { multipart: { ...base, boutique: "paris" } });
+  expect(inconnue.status()).toBe(422);
 });
