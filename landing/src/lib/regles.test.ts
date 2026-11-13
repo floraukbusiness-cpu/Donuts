@@ -84,6 +84,22 @@ describe("validation", () => {
     expect(trop.ok).toBe(false);
     expect(valider("anniversaire", { ...sp, date: dateSurPlace(), creneau: "10h00 – 11h00" }).ok).toBe(false);
   });
+  it("heure de retrait : Strasbourg dès 9h30, Lyon dès 10h, dernier retrait 19h45", () => {
+    const perso = { ...base, type: "personnalisee", evenement: "EVJF", theme: "Rose", nb_donuts: "12", presentation: "boite" };
+    const ok = (boutique: string, heure: string) => valider("personnalisee", { ...perso, boutique, heure_retrait: heure }).ok;
+    expect(ok("strasbourg", "09:30")).toBe(true);
+    expect(ok("strasbourg", "09:00")).toBe(false);
+    expect(ok("lyon", "09:30")).toBe(false);
+    expect(ok("lyon", "10:00")).toBe(true);
+    expect(ok("lyon", "19:45")).toBe(true);
+    expect(ok("strasbourg", "19:45")).toBe(true);
+    expect(ok("strasbourg", "20:00")).toBe(false);
+    const r = valider("personnalisee", { ...perso, boutique: "strasbourg", heure_retrait: "09:00" });
+    if (!r.ok) expect(r.erreurs.heure_retrait).toBe("La boutique est ouverte de 9h30 à 20h.");
+    const l = valider("anniversaire", { ...base, type: "anniversaire", mode: "a_emporter", heure_retrait: "09:30", nb_donuts: "12", presentation: "boite" });
+    expect(l.ok).toBe(false);
+    if (!l.ok) expect(l.erreurs.heure_retrait).toBe("La boutique est ouverte de 10h à 20h.");
+  });
   it("Strasbourg : pas de sur place ; boutique par défaut = Lyon", () => {
     const sp = { ...base, date: dateSurPlace(), type: "anniversaire", mode: "sur_place", creneau: "14h00 – 15h00", apport: "apporte", enfants: "2", adultes: "1", nb_donuts: "12", presentation: "boite" };
     const lyon = valider("anniversaire", sp);

@@ -2,7 +2,7 @@ import Image from "next/image";
 import { Demandes } from "@/components/Demandes";
 import { Galerie } from "@/components/Galerie";
 import { PiedDePage } from "@/components/PiedDePage";
-import { adresse, BALLON, BOUGIE, BOUTIQUES, CATEGORIES_PARFUMS, DECO, MINIMUM_DONUTS, OFFRE_DOUZE, PRESENTATIONS, PRIX } from "@/lib/catalogue";
+import { adresse, horairesTexte, BALLON, BOUGIE, BOUTIQUES, CATEGORIES_PARFUMS, DECO, MINIMUM_DONUTS, OFFRE_DOUZE, PRESENTATIONS, PRIX } from "@/lib/catalogue";
 
 // Ordre : on alterne une illustration (IA) et une vraie photo de la boutique.
 const GALERIE = [
@@ -30,7 +30,7 @@ const FAQ = [
   },
   {
     q: "Où récupérer ma commande ?",
-    r: `Les commandes se retirent dans la boutique que vous avez choisie. ${BOUTIQUES.lyon.nom} : ${adresse(BOUTIQUES.lyon)}. ${BOUTIQUES.lyon.horaires}, fermé le dimanche. ${BOUTIQUES.strasbourg.nom} : ${adresse(BOUTIQUES.strasbourg)}. Les anniversaires sur place sont possibles à Lyon uniquement ; à Strasbourg, tout se récupère à emporter.`,
+    r: `Les commandes se retirent dans la boutique que vous avez choisie. ${BOUTIQUES.lyon.nom} : ${adresse(BOUTIQUES.lyon)}. ${horairesTexte(BOUTIQUES.lyon)}, fermé le dimanche. ${BOUTIQUES.strasbourg.nom} : ${adresse(BOUTIQUES.strasbourg)}. ${horairesTexte(BOUTIQUES.strasbourg)}, fermé le dimanche. Les anniversaires sur place sont possibles à Lyon uniquement ; à Strasbourg, tout se récupère à emporter.`,
   },
   {
     q: "Comment se passe le paiement ?",

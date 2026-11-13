@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
-import { BALLON, BOUGIE, BOUTIQUES, type BoutiqueId, CRENEAUX_SUR_PLACE, DECO, JOURS_SUR_PLACE, MAX_ADULTES_SUR_PLACE, MAX_ENFANTS_SUR_PLACE, MINIMUM_DONUTS, PRESENTATIONS, PRIX, SOURCES } from "@/lib/catalogue";
+import { BALLON, BOUGIE, BOUTIQUES, heureLisible, heureRetraitMax, type BoutiqueId, CRENEAUX_SUR_PLACE, DECO, JOURS_SUR_PLACE, MAX_ADULTES_SUR_PLACE, MAX_ENFANTS_SUR_PLACE, MINIMUM_DONUTS, PRESENTATIONS, PRIX, SOURCES } from "@/lib/catalogue";
 import { dateMaximum, dateMinimum, dateMinimumSurPlace } from "@/lib/dates";
 import {
   EVENEMENTS,
@@ -292,7 +292,7 @@ export function FormulaireDemande({ type, utm, boutique }: Props) {
             </>
           )}
           {mode === "a_emporter" && (
-            <Champ name="heure_retrait" label="Heure de retrait" requis type="time" min="10:00" max="19:45" step={900} aide="Entre 10h et 20h." erreur={err("heure_retrait")} />
+            <Champ name="heure_retrait" label="Heure de retrait" requis type="time" min={shop.ouverture} max={heureRetraitMax(shop)} step={900} aide={`Entre ${heureLisible(shop.ouverture)} et ${heureLisible(shop.fermeture)}.`} erreur={err("heure_retrait")} />
           )}
           <div className="grid grid-cols-2 gap-4">
             <Champ name="age" label="Âge fêté" type="number" inputMode="numeric" min={1} max={120} erreur={err("age")} />
@@ -365,7 +365,7 @@ export function FormulaireDemande({ type, utm, boutique }: Props) {
           erreur={err("date")}
         />
         {type === "personnalisee" && (
-          <Champ name="heure_retrait" label="Heure de retrait" requis type="time" min="10:00" max="19:45" step={900} aide="Entre 10h et 20h." erreur={err("heure_retrait")} />
+          <Champ name="heure_retrait" label="Heure de retrait" requis type="time" min={shop.ouverture} max={heureRetraitMax(shop)} step={900} aide={`Entre ${heureLisible(shop.ouverture)} et ${heureLisible(shop.fermeture)}.`} erreur={err("heure_retrait")} />
         )}
       </Groupe>
       )}

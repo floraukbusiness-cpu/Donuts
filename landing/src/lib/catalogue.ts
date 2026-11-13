@@ -135,7 +135,8 @@ export type Boutique = {
   rue: string;
   codePostal: string;
   ville: string;
-  horaires: string;
+  ouverture: string; // HH:MM, du lundi au samedi
+  fermeture: string; // HH:MM
   instagram: string;
   email: string; // adresse de contact affichée (mentions légales)
   surPlace: boolean; // anniversaires sur place possibles ?
@@ -150,7 +151,8 @@ export const BOUTIQUES: Record<BoutiqueId, Boutique> = {
     rue: "17 rue du Docteur Bouchut",
     codePostal: "69003",
     ville: "Lyon",
-    horaires: "Ouvert du lundi au samedi, de 10h à 20h",
+    ouverture: "10:00",
+    fermeture: "20:00",
     instagram: "donutsanddonuts_lyonpartdieu",
     email: "donutsdonuts.lyonpartdieu@gmail.com",
     surPlace: true,
@@ -163,12 +165,30 @@ export const BOUTIQUES: Record<BoutiqueId, Boutique> = {
     rue: "24 place des Halles",
     codePostal: "67000",
     ville: "Strasbourg",
-    horaires: "", // à compléter
-    instagram: "", // à compléter
+    ouverture: "09:30",
+    fermeture: "20:00",
+    instagram: "donutsanddonuts_strasbourg",
     email: "donutsdonuts.strasbourg@gmail.com",
     surPlace: false, // à Strasbourg : à emporter uniquement
   },
 };
+
+const pad2 = (n: number) => String(n).padStart(2, "0");
+/** « 09:30 » → « 9h30 », « 20:00 » → « 20h » */
+export function heureLisible(hhmm: string): string {
+  const [h, m] = hhmm.split(":");
+  return m === "00" ? `${Number(h)}h` : `${Number(h)}h${m}`;
+}
+/** « de 9h30 à 20h » */
+export const plageHoraire = (b: Boutique) => `de ${heureLisible(b.ouverture)} à ${heureLisible(b.fermeture)}`;
+/** « Ouvert du lundi au samedi, de 10h à 20h » */
+export const horairesTexte = (b: Boutique) => `Ouvert du lundi au samedi, ${plageHoraire(b)}`;
+/** Dernière heure de retrait possible : 15 min avant la fermeture. */
+export function heureRetraitMax(b: Boutique): string {
+  const [h, m] = b.fermeture.split(":").map(Number);
+  const t = h * 60 + m - 15;
+  return `${pad2(Math.floor(t / 60))}:${pad2(t % 60)}`;
+}
 
 /** Boutique historique (Lyon) : mentions légales, données structurées. */
 export const BOUTIQUE = BOUTIQUES.lyon;

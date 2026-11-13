@@ -95,6 +95,10 @@ test("page d'accueil : contenu, SEO, pas de défilement horizontal", async ({ pa
   await expect(page).toHaveTitle(/Donuts pour anniversaires, événements et professionnels à Lyon Part-Dieu/);
   await expect(page.locator('meta[property="og:image"]')).toHaveAttribute("content", /opengraph-image/);
   await expect(page.getByRole("link", { name: /Instagram @donutsanddonuts_lyonpartdieu/ }).first()).toBeVisible();
+  await expect(page.getByRole("link", { name: /Instagram @donutsanddonuts_strasbourg/ })).toBeVisible();
+  const pied = page.locator("footer");
+  await expect(pied.getByText("Ouvert du lundi au samedi, de 10h à 20h")).toBeVisible();
+  await expect(pied.getByText("Ouvert du lundi au samedi, de 9h30 à 20h")).toBeVisible();
   const deborde = await page.evaluate(() => document.documentElement.scrollWidth > document.documentElement.clientWidth);
   expect(deborde).toBe(false);
 });
@@ -170,15 +174,18 @@ test("STRASBOURG : anniversaire à emporter uniquement, envoi de bout en bout", 
   await expect(f.getByLabel("Sur place, à la boutique")).toHaveCount(0);
   await expect(f.getByText("Bougies et décoration")).toHaveCount(0);
   await expect(f.getByRole("table")).toHaveCount(0); // pas de calendrier « sur place »
+  await expect(f.locator('[name="heure_retrait"]')).toHaveAttribute("min", "09:30"); // Strasbourg ouvre à 9h30
+  await expect(f.locator('[name="heure_retrait"]')).toHaveAttribute("max", "19:45");
+  await expect(f.getByText("Entre 9h30 et 20h.")).toBeVisible();
   await coordonnees(page);
-  await f.locator('[name="heure_retrait"]').fill("15:00");
+  await f.locator('[name="heure_retrait"]').fill("09:30");
   await f.locator('[name="nb_donuts"]').fill("12");
   await page.getByLabel(/Boîte\(s\)/).check();
   await finir(page);
   await expect(page.getByRole("status")).toContainText("Merci, la boutique vous recontacte sous 48 h");
   await expect(page.getByRole("status")).toContainText("Donuts & Donuts Strasbourg");
   const c = await appels(page);
-  expect(c.find((x) => x.path === "/rest/v1/demandes")!.json).toMatchObject({ type: "anniversaire", details: { boutique: "strasbourg", mode: "a_emporter", heure_retrait: "15:00" } });
+  expect(c.find((x) => x.path === "/rest/v1/demandes")!.json).toMatchObject({ type: "anniversaire", details: { boutique: "strasbourg", mode: "a_emporter", heure_retrait: "09:30" } });
   const mail = c.find((x) => x.path === "/emails")!;
   expect(String(mail.json!.subject)).toMatch(/^\[ANNIVERSAIRE\] \[STRASBOURG\] Camille Martin – /);
   expect(String(mail.json!.text)).toContain("Boutique : Strasbourg");
@@ -264,6 +271,12 @@ test("anniversaire sur place : sans date, le message d'erreur s'affiche sur le c
   await finir(page, null);
   await expect(f.getByText("Choisissez une date.")).toBeVisible();
   expect(await appels(page)).toHaveLength(0);
+});
+
+test("heure de retrait à Lyon : à partir de 10h", async ({ page }) => {
+  const f = await ouvrir(page, /Commande personnalisée/);
+  await expect(f.locator('[name="heure_retrait"]')).toHaveAttribute("min", "10:00");
+  await expect(f.getByText("Entre 10h et 20h.")).toBeVisible();
 });
 
 test("minimum de 6 donuts contrôlé", async ({ page }) => {

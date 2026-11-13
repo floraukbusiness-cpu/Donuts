@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { adresse, BOUTIQUE_IDS, BOUTIQUES } from "@/lib/catalogue";
+import { adresse, BOUTIQUE_IDS, BOUTIQUES, horairesTexte } from "@/lib/catalogue";
 
 export function PiedDePage() {
   return (
@@ -11,7 +11,7 @@ export function PiedDePage() {
             <div key={id}>
               <p className="font-titre text-xl font-semibold">{b.complet}</p>
               <address className="mt-2 not-italic">{adresse(b)}</address>
-              {b.horaires && <p className="mt-2">{b.horaires}</p>}
+              <p className="mt-2">{horairesTexte(b)}</p>
               <p>{b.surPlace ? "Places assises sur place" : "Commandes à emporter"}</p>
               {b.instagram && (
                 <p className="mt-2">

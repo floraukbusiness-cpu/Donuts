@@ -1,7 +1,7 @@
 // Règles de validation des 3 formulaires, partagées entre le navigateur
 // (messages d'erreur immédiats) et le serveur (contrôle final, non contournable).
 import { z } from "zod";
-import { BOUTIQUE_IDS, CRENEAUX_SUR_PLACE, JOURS_SUR_PLACE, MAX_ADULTES_SUR_PLACE, MAX_ENFANTS_SUR_PLACE, MINIMUM_DONUTS, PARFUMS_A_DEFINIR, PRESENTATIONS, SOURCES, TOUS_LES_PARFUMS } from "./catalogue";
+import { BOUTIQUES, BOUTIQUE_IDS, CRENEAUX_SUR_PLACE, heureRetraitMax, plageHoraire, type BoutiqueId, JOURS_SUR_PLACE, MAX_ADULTES_SUR_PLACE, MAX_ENFANTS_SUR_PLACE, MINIMUM_DONUTS, PARFUMS_A_DEFINIR, PRESENTATIONS, SOURCES, TOUS_LES_PARFUMS } from "./catalogue";
 import { dateMaximum, dateMinimum, dateMinimumSurPlace, estDimanche, jourSemaine } from "./dates";
 
 export const TYPES = ["anniversaire", "personnalisee", "pro"] as const;
@@ -16,10 +16,14 @@ const txt = (max: number) => z.string().trim().max(max, `${max} caractères maxi
 const requis = (msg: string, max = 120) => z.string().trim().min(1, msg).max(max, `${max} caractères maximum.`);
 const optionnel = (max: number) => txt(max).optional().default("");
 
-const heureBoutique = z
-  .string()
-  .regex(/^([01]\d|2[0-3]):[0-5]\d$/, "Indiquez une heure.")
-  .refine((h) => h >= "10:00" && h <= "19:45", "La boutique est ouverte de 10h à 20h.");
+/** Message d'erreur si l'heure de retrait n'est pas dans les horaires de la boutique, sinon null. */
+function erreurHeureRetrait(heure: string, boutique: string): string | null {
+  if (!heure) return "Indiquez l'heure de retrait.";
+  if (!/^([01]\d|2[0-3]):[0-5]\d$/.test(heure)) return "Indiquez une heure.";
+  const b = BOUTIQUES[boutique as BoutiqueId] ?? BOUTIQUES.lyon;
+  if (heure < b.ouverture || heure > heureRetraitMax(b)) return `La boutique est ouverte ${plageHoraire(b)}.`;
+  return null;
+}
 
 const entier = (msg: string) =>
   z
@@ -133,8 +137,8 @@ export const anniversaireSchema = z
       if (v.date < dateMinimum()) ctx.addIssue({ code: "custom", path: ["date"], message: "Nous avons besoin d'au moins 7 jours pour préparer votre commande : choisissez une date à partir de J+7." });
       else if (v.date > dateMaximum()) ctx.addIssue({ code: "custom", path: ["date"], message: "Choisissez une date dans les 12 prochains mois." });
       else if (estDimanche(v.date)) ctx.addIssue({ code: "custom", path: ["date"], message: "La boutique est fermée le dimanche : choisissez un autre jour." });
-      const r = heureBoutique.safeParse(v.heure_retrait);
-      if (!r.success) ctx.addIssue({ code: "custom", path: ["heure_retrait"], message: v.heure_retrait ? r.error.issues[0].message : "Indiquez l'heure de retrait." });
+      const e = erreurHeureRetrait(v.heure_retrait, v.boutique);
+      if (e) ctx.addIssue({ code: "custom", path: ["heure_retrait"], message: e });
     }
   });
 
@@ -146,10 +150,12 @@ export const personnaliseeSchema = z
     evenement_autre: optionnel(80),
     theme: requis("Décrivez le thème, les couleurs, le message ou le décor souhaité.", 1000),
     ...commande(),
-    heure_retrait: z.string().min(1, "Indiquez l'heure de retrait.").pipe(heureBoutique),
+    heure_retrait: z.string().optional().default(""),
   })
   .superRefine((v, ctx) => {
     verifierCommande(v, ctx);
+    const e = erreurHeureRetrait(v.heure_retrait, v.boutique);
+    if (e) ctx.addIssue({ code: "custom", path: ["heure_retrait"], message: e });
     if (v.evenement === "Autre" && !v.evenement_autre) ctx.addIssue({ code: "custom", path: ["evenement_autre"], message: "Précisez le type d'événement." });
   });
 
