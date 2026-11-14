@@ -35,11 +35,11 @@ Compte créé **avec l'adresse donutsdonuts.lyonpartdieu@gmail.com** (sans nom d
 
 4. **Deploy**. Chaque modification poussée sur la branche `main` est ensuite mise en ligne automatiquement.
 
-**Deux boutiques, un seul site.** Un lien par compte Instagram (la boutique est alors présélectionnée) :
-- Lyon : `https://<votre-adresse>.vercel.app/?boutique=lyon&utm_source=instagram&utm_medium=bio`
-- Strasbourg : `https://<votre-adresse>.vercel.app/?boutique=strasbourg&utm_source=instagram&utm_medium=bio`
+**Deux boutiques, un seul site.** L'adresse de base du site (`/`) pose la question « Lyon ou Strasbourg ? », puis envoie vers la page de la boutique. Pour les bios Instagram, un lien direct par compte (sans passer par la question) :
+- Lyon : `https://<votre-adresse>.vercel.app/lyon?utm_source=instagram&utm_medium=bio`
+- Strasbourg : `https://<votre-adresse>.vercel.app/strasbourg?utm_source=instagram&utm_medium=bio`
 
-Sans `boutique=` dans le lien, la personne choisit sa boutique en haut de la page.
+Les anciens liens du type `/?boutique=lyon&utm_source=instagram` redirigent automatiquement vers `/lyon?utm_source=instagram`.
 
 ---
 
@@ -60,10 +60,11 @@ Supabase → **Table Editor** :
 
 | Je veux changer… | Fichier |
 |---|---|
-| **Boutiques** (adresse, horaires, Instagram, e-mail, sur place oui/non) : bloc `BOUTIQUES`, Lyon et Strasbourg ; un champ laissé vide n'est pas affiché | [`src/lib/catalogue.ts`](src/lib/catalogue.ts) |
+| **Boutiques** (adresse, horaires, Instagram, e-mail, sur place oui/non) : bloc `BOUTIQUES`, Lyon et Strasbourg ; chaque boutique a sa page (`/lyon`, `/strasbourg`) | [`src/lib/catalogue.ts`](src/lib/catalogue.ts) |
 | Prix, minimum de commande, offre « 12 = 1 offert », présentations, options (dont `BOUGIE` 2 € et `BALLON` 3 € par enfant, anniversaire sur place), **parfums**, adresse, horaires, Instagram | [`src/lib/catalogue.ts`](src/lib/catalogue.ts) |
 | Anniversaire sur place : jours ouverts (mercredi, samedi), délai (5 jours), créneaux (1 h, pause de 30 min, 11h-18h), limites d'invités | [`src/lib/catalogue.ts`](src/lib/catalogue.ts) : `JOURS_SUR_PLACE`, `DELAI_SUR_PLACE_JOURS`, `SUR_PLACE_DEBUT/FIN`, `CRENEAU_DUREE/PAUSE`, `MAX_ENFANTS/ADULTES_SUR_PLACE` |
-| Textes de la page, étapes, FAQ, galerie | [`src/app/page.tsx`](src/app/page.tsx) |
+| Textes des pages boutique, étapes, FAQ, galerie | [`src/app/[boutique]/page.tsx`](src/app/%5Bboutique%5D/page.tsx) |
+| Première page « Lyon ou Strasbourg ? » | [`src/app/page.tsx`](src/app/page.tsx) |
 | Photos du diaporama de chaque carte (Anniversaire, Personnalisée, Pro) | [`src/components/Demandes.tsx`](src/components/Demandes.tsx) : liste `photos` de la carte (une ligne par photo) |
 | Mentions légales (bloc `EDITEUR` **à compléter**) | [`src/app/mentions-legales/page.tsx`](src/app/mentions-legales/page.tsx) |
 | Champs des formulaires et règles (J+7, horaires de retrait…) | [`src/lib/schema.ts`](src/lib/schema.ts), [`src/components/FormulaireDemande.tsx`](src/components/FormulaireDemande.tsx) |

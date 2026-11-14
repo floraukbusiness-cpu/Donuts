@@ -1,6 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import localFont from "next/font/local";
-import { BOUTIQUE } from "@/lib/catalogue";
+import { siteUrl } from "@/lib/site";
 import "./globals.css";
 
 const fredoka = localFont({
@@ -22,19 +22,13 @@ const nunito = localFont({
   display: "swap",
 });
 
-function siteUrl(): string {
-  if (process.env.SITE_URL) return process.env.SITE_URL;
-  if (process.env.VERCEL_PROJECT_PRODUCTION_URL) return `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`;
-  return "http://localhost:3000";
-}
-
-const TITRE = "Donuts pour anniversaires, événements et professionnels à Lyon Part-Dieu et Strasbourg";
+const TITRE = "Donuts & Donuts : Lyon Part-Dieu et Strasbourg";
 const DESCRIPTION =
-  "Donuts & Donuts Lyon Part-Dieu et Strasbourg : commandez vos donuts personnalisés pour un anniversaire (sur place à Lyon, ou à emporter), une soirée, un mariage, un baptême, un EVJF ou pour votre entreprise.";
+  "Commandez vos donuts personnalisés pour un anniversaire, une soirée, un mariage, un baptême, un EVJF ou pour votre entreprise. Choisissez votre boutique : Lyon Part-Dieu ou Strasbourg.";
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl()),
-  title: `${TITRE} | Donuts & Donuts`,
+  title: TITRE,
   description: DESCRIPTION,
   alternates: { canonical: "/" },
   openGraph: {
@@ -55,32 +49,6 @@ export const viewport: Viewport = {
   initialScale: 1,
 };
 
-const jsonLd = {
-  "@context": "https://schema.org",
-  "@type": "Bakery",
-  name: BOUTIQUE.nom,
-  url: siteUrl(),
-  image: `${siteUrl()}/opengraph-image.jpg`,
-  email: BOUTIQUE.email,
-  servesCuisine: "Donuts",
-  address: {
-    "@type": "PostalAddress",
-    streetAddress: `${BOUTIQUE.rue}, ${BOUTIQUE.lieu}`,
-    postalCode: BOUTIQUE.codePostal,
-    addressLocality: BOUTIQUE.ville,
-    addressCountry: "FR",
-  },
-  openingHoursSpecification: [
-    {
-      "@type": "OpeningHoursSpecification",
-      dayOfWeek: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"],
-      opens: "10:00",
-      closes: "20:00",
-    },
-  ],
-  sameAs: [`https://www.instagram.com/${BOUTIQUE.instagram}/`],
-};
-
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="fr" className={`${fredoka.variable} ${nunito.variable}`}>
@@ -89,7 +57,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           Aller au contenu
         </a>
         {children}
-        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
       </body>
     </html>
   );

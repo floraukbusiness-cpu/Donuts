@@ -16,14 +16,9 @@ function dansJours(n: number) {
   return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
 }
 
-/** Choix de la boutique (étape obligatoire avant de voir les formules, sauf lien ?boutique=…). */
-async function choisirBoutique(page: Page, nom = "Lyon Part-Dieu") {
-  await page.locator('label:has(input[name="boutique-choix"])', { hasText: nom }).click();
-}
-
-async function ouvrir(page: Page, carte: RegExp, url = "/", boutique = "Lyon Part-Dieu") {
+/** Ouvre la page d'une boutique (Lyon par défaut) puis le formulaire de la carte demandée. */
+async function ouvrir(page: Page, carte: RegExp, url = "/lyon") {
   await page.goto(url);
-  if (!url.includes("boutique=")) await choisirBoutique(page, boutique);
   await page.getByRole("button", { name: carte }).click();
   const form = page.locator("form");
   await expect(form).toBeVisible();
@@ -89,8 +84,8 @@ test.beforeEach(async ({ page }) => {
   await page.request.delete(`${MOCK}/__calls`);
 });
 
-test("page d'accueil : contenu, SEO, pas de défilement horizontal", async ({ page }) => {
-  await page.goto("/");
+test("page d'accueil de Lyon : contenu, SEO, pas de défilement horizontal", async ({ page }) => {
+  await page.goto("/lyon");
   await expect(page.getByRole("heading", { level: 1 })).toHaveText("Des donuts pour toutes vos occasions");
   await expect(page.getByRole("link", { name: "Faire ma demande" }).first()).toBeVisible();
   for (const t of ["Quelle est votre demande ?", "Comment ça marche ?", "Nos réalisations", "Parfums et prix", "Questions fréquentes"]) {
@@ -113,11 +108,17 @@ test("page d'accueil : contenu, SEO, pas de défilement horizontal", async ({ pa
 });
 
 test("accessibilité (axe, WCAG AA) : accueil + formulaire ouvert + mentions", async ({ page }) => {
-  await page.goto("/");
-  let r = await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa", "wcag21aa", "wcag22aa"]).analyze();
+  const axe = () => new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa", "wcag21aa", "wcag22aa"]).analyze();
+  await page.goto("/"); // première page : choix de la boutique
+  let r = await axe();
+  expect(r.violations, JSON.stringify(r.violations, null, 1)).toEqual([]);
+  await page.goto("/strasbourg");
+  r = await axe();
   expect(r.violations, JSON.stringify(r.violations, null, 1)).toEqual([]);
 
-  await choisirBoutique(page);
+  await page.goto("/lyon");
+  r = await axe();
+  expect(r.violations, JSON.stringify(r.violations, null, 1)).toEqual([]);
   await page.getByRole("button", { name: /Anniversaire/ }).click();
   await page.getByLabel("Sur place, à la boutique").check();
   await page.locator("form").getByRole("button", { name: "Envoyer ma demande" }).click(); // affiche les erreurs
@@ -155,30 +156,47 @@ test("calendrier : dates à moins de 7 jours bloquées avec explication", async 
   expect(await appels(page)).toHaveLength(0);
 });
 
-test("boutiques : choix de la boutique avant les formules ; le lien ?boutique=strasbourg la présélectionne", async ({ page }) => {
-  await page.goto("/");
+test("première page : choix de la boutique ; les liens Instagram avec ?boutique= vont directement à la bonne page", async ({ page }) => {
+  await page.goto("/?utm_source=instagram&utm_medium=bio");
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText("Des donuts pour toutes vos occasions");
   await expect(page.getByText("Dans quelle boutique souhaitez-vous commander ?")).toBeVisible();
-  await expect(page.getByText("Choisissez votre boutique pour voir les formules.")).toBeVisible();
-  await expect(page.getByRole("button", { name: /Faire ma demande/ })).toHaveCount(0); // pas de formules sans boutique
-  await choisirBoutique(page, "Strasbourg");
+  await expect(page.getByRole("button", { name: /Faire ma demande/ })).toHaveCount(0); // pas de formules avant d'avoir choisi
+  await expect(page).toHaveTitle(/Lyon Part-Dieu et Strasbourg/);
+  // le choix garde les paramètres de provenance
+  await page.getByRole("main").getByRole("link", { name: /Strasbourg/ }).click();
+  await expect(page).toHaveURL(/\/strasbourg\?utm_source=instagram&utm_medium=bio$/);
+  await expect(page).toHaveTitle(/à Strasbourg/);
   await expect(page.getByRole("button", { name: /Anniversaire/ })).toBeVisible();
   await expect(page.getByText("À emporter uniquement.").first()).toBeVisible(); // texte de la carte Anniversaire à Strasbourg
-  // Lien d'un compte Instagram : boutique présélectionnée, formules visibles tout de suite
-  await page.goto("/?boutique=strasbourg&utm_source=instagram");
-  await expect(page.locator('input[name="boutique-choix"][value="strasbourg"]')).toBeChecked();
-  await expect(page.getByRole("button", { name: /Anniversaire/ })).toBeVisible();
-  await page.goto("/?boutique=lyon");
-  await expect(page.locator('input[name="boutique-choix"][value="lyon"]')).toBeChecked();
-  // changer de boutique referme le formulaire ouvert
-  await page.getByRole("button", { name: /Anniversaire/ }).click();
-  await expect(page.locator("form")).toBeVisible();
-  await choisirBoutique(page, "Strasbourg");
-  await expect(page.locator("form")).toHaveCount(1); // le formulaire est recréé pour la nouvelle boutique
-  await expect(page.locator('input[name="boutique"]')).toHaveValue("strasbourg");
+  // anciens liens ?boutique=… : redirigés, provenance conservée
+  await page.goto("/?boutique=lyon&utm_source=instagram");
+  await expect(page).toHaveURL(/\/lyon\?utm_source=instagram$/);
+  await expect(page).toHaveTitle(/professionnels à Lyon Part-Dieu/);
+  await page.goto("/?boutique=strasbourg");
+  await expect(page).toHaveURL(/\/strasbourg$/);
+  expect((await page.goto("/paris"))?.status()).toBe(404);
+  // lien « Changer de boutique »
+  await page.goto("/lyon");
+  await page.getByRole("link", { name: "Changer de boutique" }).click();
+  await expect(page).toHaveURL(/\/$/);
+  await expect(page.getByText("Dans quelle boutique souhaitez-vous commander ?")).toBeVisible();
+});
+
+test("chaque boutique a sa page : options sur place seulement à Lyon, adresse et Instagram de la boutique", async ({ page }) => {
+  await page.goto("/lyon");
+  await expect(page.getByText("(anniversaire sur place)").first()).toBeVisible();
+  await expect(page.locator("footer").getByText(/17 rue du Docteur Bouchut/)).toBeVisible();
+  await page.goto("/strasbourg");
+  await expect(page.getByText("(anniversaire sur place)")).toHaveCount(0);
+  await expect(page.locator("footer").getByText(/24 place des Halles/)).toBeVisible();
+  await expect(page.locator("footer").getByText(/9h30 à 20h/)).toBeVisible();
+  await expect(page.getByRole("link", { name: /Instagram @donutsanddonuts_strasbourg/ }).first()).toBeVisible();
+  const ld = await page.locator('script[type="application/ld+json"]').first().textContent();
+  expect(JSON.parse(ld!)).toMatchObject({ "@type": "Bakery", address: { addressLocality: "Strasbourg" }, openingHoursSpecification: [{ opens: "09:30", closes: "20:00" }] });
 });
 
 test("STRASBOURG : anniversaire à emporter uniquement, envoi de bout en bout", async ({ page }) => {
-  const f = await ouvrir(page, /Anniversaire/, "/?boutique=strasbourg");
+  const f = await ouvrir(page, /Anniversaire/, "/strasbourg");
   await expect(f.getByText("À Strasbourg, les anniversaires sont uniquement à emporter.")).toBeVisible();
   await expect(f.getByLabel("Sur place, à la boutique")).toHaveCount(0);
   await expect(f.getByText("Bougies et décoration")).toHaveCount(0);
@@ -318,7 +336,7 @@ test("minimum de 6 donuts contrôlé", async ({ page }) => {
 });
 
 test("ANNIVERSAIRE sur place : envoi de bout en bout + UTM", async ({ page }) => {
-  await ouvrir(page, /Anniversaire/, "/?utm_source=instagram&utm_medium=bio&utm_campaign=noel");
+  await ouvrir(page, /Anniversaire/, "/lyon?utm_source=instagram&utm_medium=bio&utm_campaign=noel");
   await coordonnees(page);
   const f = page.locator("form");
   await page.getByLabel("Sur place, à la boutique").check();
@@ -434,8 +452,7 @@ test("photos : 3 maximum, retrait possible", async ({ page }) => {
 });
 
 test("cartes : diaporama de photos (clic, flèches, points) sans ouvrir le formulaire", async ({ page }) => {
-  await page.goto("/");
-  await choisirBoutique(page);
+  await page.goto("/lyon");
   const carrousel = page.getByRole("region", { name: /Photos : Anniversaire/ });
   const statut = carrousel.locator("p[aria-live]");
   await expect(statut).toHaveText("Photo 1 sur 4");
@@ -466,7 +483,7 @@ test("cartes : diaporama de photos (clic, flèches, points) sans ouvrir le formu
 });
 
 test("galerie : 4 photos visibles sur grand écran, défilement pour voir les autres", async ({ page }) => {
-  await page.goto("/");
+  await page.goto("/lyon");
   const galerie = page.getByRole("region", { name: /Galerie de photos/ });
   const piste = galerie.locator("ul");
   await piste.scrollIntoViewIfNeeded();
