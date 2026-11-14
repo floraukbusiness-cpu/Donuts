@@ -90,9 +90,7 @@ function verifierCommande(v: Commande, ctx: z.RefinementCtx) {
   if (v.presentation === "brochettes" && v.nb_minis === 0) {
     ctx.addIssue({ code: "custom", path: ["nb_minis"], message: "Les brochettes se font avec des mini donuts : indiquez le nombre de mini donuts." });
   }
-  if (v.presentation === "piece-montee" && v.nb_donuts === 0) {
-    ctx.addIssue({ code: "custom", path: ["nb_donuts"], message: "La pièce montée se fait avec des donuts classiques : indiquez leur nombre." });
-  }
+  // La pièce montée peut se faire avec des donuts classiques, des mini donuts, ou un mélange.
 }
 
 export const anniversaireSchema = z

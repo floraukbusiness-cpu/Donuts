@@ -100,6 +100,16 @@ describe("validation", () => {
     expect(l.ok).toBe(false);
     if (!l.ok) expect(l.erreurs.heure_retrait).toBe("La boutique est ouverte de 10h à 20h.");
   });
+  it("pièce montée : donuts classiques, mini donuts, ou un mélange ; brochettes : mini donuts obligatoires", () => {
+    const perso = { ...base, type: "personnalisee", evenement: "Mariage", theme: "Blanc et or", heure_retrait: "12:00" };
+    const ok = (c: Record<string, string>) => valider("personnalisee", { ...perso, ...c }).ok;
+    expect(ok({ presentation: "piece-montee", nb_donuts: "12" })).toBe(true);
+    expect(ok({ presentation: "piece-montee", nb_minis: "24" })).toBe(true); // que des minis
+    expect(ok({ presentation: "piece-montee", nb_donuts: "6", nb_minis: "12" })).toBe(true);
+    expect(ok({ presentation: "piece-montee", nb_minis: "3" })).toBe(false); // sous le minimum de 6
+    expect(ok({ presentation: "brochettes", nb_donuts: "12" })).toBe(false); // brochettes = minis
+    expect(ok({ presentation: "brochettes", nb_minis: "12" })).toBe(true);
+  });
   it("Strasbourg : pas de sur place ; boutique par défaut = Lyon", () => {
     const sp = { ...base, date: dateSurPlace(), type: "anniversaire", mode: "sur_place", creneau: "14h00 – 15h00", apport: "apporte", enfants: "2", adultes: "1", nb_donuts: "12", presentation: "boite" };
     const lyon = valider("anniversaire", sp);

@@ -35,7 +35,7 @@ export const OFFRE_DOUZE = "12 donuts commandés = 1 donut offert";
 
 export const PRESENTATIONS = [
   { id: "boite", label: "Boîte(s)", detail: "Incluse" },
-  { id: "piece-montee", label: "Pièce montée (donuts classiques, fourrés possibles)", detail: "+20 €" },
+  { id: "piece-montee", label: "Pièce montée (donuts classiques, fourrés possibles, ou mini donuts)", detail: "+20 €" },
   { id: "brochettes", label: "Bouquet de brochettes (mini donuts nappés uniquement)", detail: "+5 €" },
 ] as const;
 

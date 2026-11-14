@@ -49,6 +49,15 @@ async function finir(page: Page, date: string | null = dansJours(10)) {
   await f.getByRole("button", { name: "Envoyer ma demande" }).click();
 }
 
+/** Première date à partir de J+n qui n'est pas un dimanche. */
+function ouvrable(n: number) {
+  for (let i = n; i < n + 14; i++) {
+    const d = dansJours(i);
+    if (new Date(d + "T00:00:00Z").getUTCDay() !== 0) return d;
+  }
+  throw new Error("introuvable");
+}
+
 const CRENEAUX_ATTENDUS = ["11h00 – 12h00", "12h30 – 13h30", "14h00 – 15h00", "15h30 – 16h30", "17h00 – 18h00"];
 
 /** Prochaine date (mercredi ou samedi) à au moins n jours, au format AAAA-MM-JJ. */
@@ -277,6 +286,22 @@ test("heure de retrait à Lyon : à partir de 10h", async ({ page }) => {
   const f = await ouvrir(page, /Commande personnalisée/);
   await expect(f.locator('[name="heure_retrait"]')).toHaveAttribute("min", "10:00");
   await expect(f.getByText("Entre 10h et 20h.")).toBeVisible();
+});
+
+test("pièce montée avec uniquement des mini donuts : acceptée", async ({ page }) => {
+  const f = await ouvrir(page, /Commande personnalisée/);
+  await expect(f.getByText(/Pièce montée \(donuts classiques, fourrés possibles, ou mini donuts\)/)).toBeVisible();
+  await coordonnees(page);
+  await f.getByLabel("Mariage", { exact: true }).check();
+  await f.locator('[name="theme"]').fill("Blanc et or");
+  await f.locator('[name="nb_minis"]').fill("24"); // aucun donut classique
+  await f.getByLabel(/Pièce montée/).check();
+  await f.locator('[name="heure_retrait"]').fill("14:00");
+  await finir(page, ouvrable(10));
+  await expect(page.getByRole("status")).toContainText("Merci, la boutique vous recontacte sous 48 h");
+  const c = await appels(page);
+  expect(c.find((x) => x.path === "/rest/v1/demandes")!.json).toMatchObject({ details: { presentation: "piece-montee", nb_donuts: 0, nb_minis: 24 } });
+  expect(String(c.find((x) => x.path === "/emails")!.json!.text)).toContain("Mini donuts : 24");
 });
 
 test("minimum de 6 donuts contrôlé", async ({ page }) => {
