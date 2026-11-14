@@ -99,10 +99,11 @@ test("page d'accueil de Lyon : contenu, SEO, pas de défilement horizontal", asy
   await expect(page).toHaveTitle(/Donuts pour anniversaires, événements et professionnels à Lyon Part-Dieu/);
   await expect(page.locator('meta[property="og:image"]')).toHaveAttribute("content", /opengraph-image/);
   await expect(page.getByRole("link", { name: /Instagram @donutsanddonuts_lyonpartdieu/ }).first()).toBeVisible();
-  await expect(page.getByRole("link", { name: /Instagram @donutsanddonuts_strasbourg/ })).toBeVisible();
+  // Lyon n'affiche que ses informations : ni l'Instagram ni les horaires de Strasbourg
   const pied = page.locator("footer");
   await expect(pied.getByText("Ouvert du lundi au samedi, de 10h à 20h")).toBeVisible();
-  await expect(pied.getByText("Ouvert du lundi au samedi, de 9h30 à 20h")).toBeVisible();
+  await expect(pied.getByText(/Place des Halles/)).toHaveCount(0);
+  await expect(page.getByRole("link", { name: /Instagram @donutsanddonuts_strasbourg/ })).toHaveCount(0);
   const deborde = await page.evaluate(() => document.documentElement.scrollWidth > document.documentElement.clientWidth);
   expect(deborde).toBe(false);
 });
@@ -162,6 +163,10 @@ test("première page : choix de la boutique ; les liens Instagram avec ?boutique
   await expect(page.getByText("Dans quelle boutique souhaitez-vous commander ?")).toBeVisible();
   await expect(page.getByRole("button", { name: /Faire ma demande/ })).toHaveCount(0); // pas de formules avant d'avoir choisi
   await expect(page).toHaveTitle(/Lyon Part-Dieu et Strasbourg/);
+  // première page neutre : ni adresse, ni horaires, ni Instagram d'une boutique (seulement les 2 cartes de choix)
+  await expect(page.locator("footer").getByText(/rue du Docteur Bouchut|place des Halles|Ouvert du lundi/)).toHaveCount(0);
+  await expect(page.getByText("📍 Lyon Part-Dieu · Strasbourg")).toHaveCount(0);
+  await expect(page.getByRole("link", { name: /Instagram @/ })).toHaveCount(0);
   // le choix garde les paramètres de provenance
   await page.getByRole("main").getByRole("link", { name: /Strasbourg/ }).click();
   await expect(page).toHaveURL(/\/strasbourg\?utm_source=instagram&utm_medium=bio$/);
@@ -191,6 +196,8 @@ test("chaque boutique a sa page : options sur place seulement à Lyon, adresse e
   await expect(page.locator("footer").getByText(/24 place des Halles/)).toBeVisible();
   await expect(page.locator("footer").getByText(/9h30 à 20h/)).toBeVisible();
   await expect(page.getByRole("link", { name: /Instagram @donutsanddonuts_strasbourg/ }).first()).toBeVisible();
+  await expect(page.getByText(/Docteur Bouchut|Westfield/)).toHaveCount(0); // rien de Lyon sur la page de Strasbourg
+  await expect(page.getByRole("link", { name: /Instagram @donutsanddonuts_lyonpartdieu/ })).toHaveCount(0);
   const ld = await page.locator('script[type="application/ld+json"]').first().textContent();
   expect(JSON.parse(ld!)).toMatchObject({ "@type": "Bakery", address: { addressLocality: "Strasbourg" }, openingHoursSpecification: [{ opens: "09:30", closes: "20:00" }] });
 });

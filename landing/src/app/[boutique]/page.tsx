@@ -317,7 +317,7 @@ export default async function Page({ params }: { params: Promise<{ boutique: str
         </section>
       </main>
 
-      <PiedDePage />
+      <PiedDePage boutique={id} />
     </>
   );
 }
