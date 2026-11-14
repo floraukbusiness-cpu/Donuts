@@ -78,7 +78,7 @@ Le plus simple : modifier le fichier directement sur GitHub (icône crayon → *
    - `donut-*.png` : donut détouré (fond transparent), posé automatiquement sur un fond rose ;
    - tout autre nom : photo de galerie.
 2. `npm run images` : crée les versions légères dans `public/images/` (WebP). Ensuite, Next.js sert automatiquement de l'AVIF/WebP à la bonne taille, avec chargement différé.
-3. Ajouter ou retirer la photo dans la liste `GALERIE` de `src/app/page.tsx`.
+3. Ajouter ou retirer la photo dans la liste `GALERIE` de `src/app/[boutique]/page.tsx`.
 
 ---
 
